@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>诉求回复智能质检助手</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>诉求回复智能质检助手</h1>
+        
+        <!-- 在标题下方添加 -->
+        <div class="header-links">
+            <a href="http://localhost:5001/api_guide" target="_blank" class="api-doc-link">
+                <span class="icon">📘</span> API调用指南
+            </a>
+        </div>
+        
+        <!-- 评分规则展示区 -->
+        <div class="rules-section">
+            <h2>评分规则及标准</h2>
+            <div class="rules-grid">
+                <!-- 第一栏 -->
+                <div class="rules-column">
+                    <div class="rule-item">
+                        <h4>1️⃣ 答非所问（30分）</h4>
+                        <ul>
+                            <li>25-30分：精准回应</li>
+                            <li>15-24分：基本回应，细节略缺</li>
+                            <li>5-14分：多处未回应或跑题</li>
+                            <li>0-4分：严重跑题</li>
+                        </ul>
+                    </div>
+                    <div class="rule-item">
+                        <h4>2️⃣ 回复逻辑性（30分）</h4>
+                        <ul>
+                            <li>25-30分：逻辑严谨</li>
+                            <li>15-24分：表达尚可</li>
+                            <li>5-14分：逻辑不清</li>
+                            <li>0-4分：混乱无序</li>
+                        </ul>
+                    </div>
+                </div>
+                <!-- 第二栏 -->
+                <div class="rules-column">
+                    <div class="rule-item">
+                        <h4>3️⃣ 问题解决情况（10分）</h4>
+                        <ul>
+                            <li>8-10分：已解决且群众认可</li>
+                            <li>5-7分：已解决但群众不认可或未解释充分</li>
+                            <li>0-4分：未解决/解决中，说明不到位</li>
+                        </ul>
+                    </div>
+                    <div class="rule-item">
+                        <h4>4️⃣ 办理时长（10分）</h4>
+                        <ul>
+                            <li>咨询类：
+                                <ul>
+                                    <li>1-2日：8-10分</li>
+                                    <li>3-5日：6-7分</li>
+                                    <li>超5日：每超1天扣2分</li>
+                                </ul>
+                            </li>
+                            <li>非咨询类：
+                                <ul>
+                                    <li>1-4日：8-10分</li>
+                                    <li>5-9日：6-7分</li>
+                                    <li>10-15日：5分</li>
+                                    <li>超15日：每超1天扣2分</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <!-- 第三栏 -->
+                <div class="rules-column">
+                    <div class="rule-item">
+                        <h4>5️⃣ 回复态度（20分）</h4>
+                        <ul>
+                            <li>16-20分：态度友好，关怀到位</li>
+                            <li>10-15分：语气尚可，有少量冷漠</li>
+                            <li>5-9分：较生硬冷淡</li>
+                            <li>0-4分：怠慢、敷衍</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 重点关注规则（单独放在下方） -->
+            <div class="highlight-rules-section">
+                <div class="rule-item highlight-rule">
+                    <h4>🚩 重点关注标记规则</h4>
+                    <p>系统将自动标记需要重点关注的回复，满足以下任一情况即会被标记：</p>
+                    <ul>
+                        <li>答非所问得分低于5分</li>
+                        <li>回复逻辑性得分低于5分</li>
+                        <li>回复态度得分低于5分</li>
+                        <li>存在错别字</li>
+                        <li>存在负面词语</li>
+                    </ul>
+                    <p class="rule-note">* 注意：在得分维度中，仅答非所问、回复逻辑性和回复态度三个指标的低分（<5分）会导致重点关注标记。其他维度的低分不会触发重点关注。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 文件上传区 -->
+        <div class="upload-section">
+            <h2>数据上传</h2>
+            <input type="file" id="fileInput" accept=".xlsx" />
+            <button onclick="processFile()">开始评分</button>
+        </div>
+
+        <!-- 数据预览区 -->
+        <div class="preview-section">
+            <h2>数据预览</h2>
+            <div id="previewTable"></div>
+        </div>
+
+        <!-- 评分结果区 -->
+        <div class="results-section">
+            <h2>评分结果</h2>
+            <div id="resultsTable"></div>
+            <button id="exportBtn" onclick="exportResults()" style="display: none;">导出结果</button>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>© 2024 诉求回复智能质检助手 v0.1.0</p>
+    </footer>
+
+    <script>
+        let processedData = [];
+        let scoringResults = [];
+
+        async function processFile() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('请先选择文件！');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                processedData = XLSX.utils.sheet_to_json(firstSheet);
+                
+                displayPreview(processedData);
+                await scoreData(processedData);
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function displayPreview(data) {
+            const previewDiv = document.getElementById('previewTable');
+            let html = '<table><tr>';
+            
+            // 表头
+            const headers = Object.keys(data[0]);
+            headers.forEach(header => {
+                html += `<th>${header}</th>`;
+            });
+            html += '</tr>';
+
+            // 数据行
+            data.forEach(row => {
+                html += '<tr>';
+                headers.forEach(header => {
+                    html += `<td>${row[header]}</td>`;
+                });
+                html += '</tr>';
+            });
+
+            html += '</table>';
+            previewDiv.innerHTML = html;
+        }
+
+        async function scoreData(data) {
+            const resultsDiv = document.getElementById('resultsTable');
+            resultsDiv.innerHTML = '<p>评分中，请稍候...</p>';
+            
+            try {
+                console.log('开始发送评分请求:', data);  // 添加日志
+                const response = await axios.post('http://localhost:5001/batch_score', {
+                    data: data
+                });
+                
+                console.log('收到服务器响应:', response);  // 添加日志
+                
+                if (response.data && Array.isArray(response.data)) {
+                    scoringResults = response.data;
+                    displayResults(scoringResults);
+                    document.getElementById('exportBtn').style.display = 'block';
+                } else {
+                    throw new Error('服务器返回数据格式错误');
+                }
+            } catch (error) {
+                console.error('评分错误:', error);
+                let errorMessage = '评分出错：';
+                if (error.response) {
+                    // 服务器返回错误
+                    errorMessage += error.response.data.message || error.response.data.error || error.message;
+                    console.error('服务器错误详情:', error.response.data);
+                } else if (error.request) {
+                    // 请求发送失败
+                    errorMessage += '无法连接到服务器，请检查服务是否启动';
+                    console.error('请求错误:', error.request);
+                } else {
+                    // 其他错误
+                    errorMessage += error.message;
+                }
+                resultsDiv.innerHTML = `<p class="error">${errorMessage}</p>`;
+            }
+        }
+
+        function displayResults(results) {
+            const resultsDiv = document.getElementById('resultsTable');
+            if (!results || results.length === 0) {
+                resultsDiv.innerHTML = '<p class="error">没有评分结果</p>';
+                return;
+            }
+
+            let html = `
+                <table>
+                    <tr>
+                        <th>序号</th>
+                        <th>总分</th>
+                        <th>重点关注</th>
+                        <th>详细评分</th>
+                        <th>改进建议</th>
+                    </tr>
+            `;
+            
+            results.forEach((result, index) => {
+                if (result.error) {
+                    html += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td colspan="4" class="error">处理出错: ${result.error}</td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                // 计算总分
+                const details = result.evaluation_details;
+                const calculatedScore = details ? (
+                    (details.答非所问?.得分 || 0) +
+                    (details.回复逻辑性?.得分 || 0) +
+                    (details.问题解决情况?.得分 || 0) +
+                    (details.办理时长?.得分 || 0) +
+                    (details.回复态度?.得分 || 0)
+                ) : 0;
+
+                // 如果计算的总分与返回的总分不一致，使用计算的总分
+                const finalScore = calculatedScore;
+
+                // 获取重点关注原因
+                const concerns = [];
+                let shouldBeConcerned = false;
+                
+                if (details) {
+                    // 检查三个主要指标的得分
+                    if (details.答非所问?.得分 < 5) {
+                        concerns.push('答非所问得分过低');
+                        shouldBeConcerned = true;
+                    }
+                    if (details.回复逻辑性?.得分 < 5) {
+                        concerns.push('回复逻辑性得分过低');
+                        shouldBeConcerned = true;
+                    }
+                    if (details.回复态度?.得分 < 5) {
+                        concerns.push('回复态度得分过低');
+                        shouldBeConcerned = true;
+                    }
+
+                    // 检查错别字
+                    if (details.错别字?.存在) {
+                        const errorWords = details.错别字.错别字列表
+                            .map(item => `"${item.错误写法}"`)
+                            .join('、');
+                        concerns.push(`存在错别字：${errorWords}`);
+                        shouldBeConcerned = true;
+                    }
+
+                    // 检查负面词语
+                    const negativeWords = [];
+                    if (details.负面词语?.词语列表) {
+                        negativeWords.push(...details.负面词语.词语列表);
+                    }
+
+                    // 去重
+                    const uniqueNegativeWords = [...new Set(negativeWords)];
+
+                    if (uniqueNegativeWords.length > 0) {
+                        concerns.push(`存在负面词语：${uniqueNegativeWords.join('、')}`);
+                        shouldBeConcerned = true;
+                    }
+                }
+
+                html += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>
+                            <div class="total-score">
+                                <span class="score-number">${finalScore}</span>
+                                <div class="score-breakdown-tooltip">
+                                    答非所问：${details.答非所问?.得分 || 0}分<br>
+                                    回复逻辑性：${details.回复逻辑性?.得分 || 0}分<br>
+                                    问题解决情况：${details.问题解决情况?.得分 || 0}分<br>
+                                    办理时长：${details.办理时长?.得分 || 0}分<br>
+                                    回复态度：${details.回复态度?.得分 || 0}分
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            ${shouldBeConcerned ? 
+                                `<div class="concern-content">
+                                    <div class="concern-main">
+                                        <div class="concern-tag">⚠️ 重点关注</div>
+                                        <div class="concern-reasons">
+                                            ${concerns.length > 0 ? 
+                                                `<div class="concern-list">
+                                                    <div class="concern-title">关注原因：</div>
+                                                    ${concerns.map(concern => 
+                                                        `<div class="concern-item">${concern}</div>`
+                                                    ).join('')}
+                                                </div>` : 
+                                                '<div class="concern-item">系统判定为重点关注，但未找到具体原因</div>'
+                                            }
+                                        </div>
+                                    </div>
+                                </div>` : 
+                                '<div class="normal-tag">✅ 正常</div>'
+                            }
+                        </td>
+                        <td>
+                            <details onToggle="handleDetailsToggle(this)">
+                                <summary>查看详情</summary>
+                                <div class="score-details">
+                                    ${formatScoreDetails(result.evaluation_details)}
+                                </div>
+                            </details>
+                        </td>
+                        <td class="suggestion-cell">
+                            <div class="suggestions-section">
+                                ${result.suggestions ? 
+                                    `<div class="suggestion-content">
+                                        <span class="suggestion-icon">📝</span>
+                                        ${result.suggestions}
+                                    </div>` : 
+                                    '<span class="no-suggestion">无改进建议</span>'
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += '</table>';
+            resultsDiv.innerHTML = html;
+        }
+
+        function formatScoreDetails(details) {
+            if (!details) return '<p class="error">无评分详情</p>';
+            
+            let html = '<div class="score-breakdown">';
+            
+            // 修改分数项的显示逻辑
+            const scoreItems = [
+                { key: '答非所问', total: 30 },
+                { key: '回复逻辑性', total: 30 },
+                { key: '问题解决情况', total: 10 },
+                { key: '办理时长', total: 10 },
+                { key: '回复态度', total: 20 }
+            ];
+
+            scoreItems.forEach(item => {
+                if (details[item.key]) {
+                    const score = details[item.key].得分;
+                    // 修改判断条件：只有得分低于5分时才添加 low-score 类
+                    html += `
+                        <div class="score-item ${score < 5 ? 'low-score' : ''}">
+                            <strong>${item.key}：</strong>
+                            <span class="score">${score}/${item.total}分</span>
+                            <div class="comment">${details[item.key].评价}</div>
+                        </div>
+                    `;
+                }
+            });
+
+            // 错别字检查
+            if (details.错别字) {
+                html += `
+                    <div class="check-item ${details.错别字.存在 ? 'has-issue' : ''}">
+                        <strong>错别字检查：</strong>
+                        ${details.错别字.存在 ? 
+                            `<ul>${details.错别字.错别字列表.map(item => 
+                                `<li>"${item.错误写法}" → "${item.正确写法}"</li>`
+                            ).join('')}</ul>` : 
+                            '无'
+                        }
+                    </div>
+                `;
+            }
+
+            // 负面词语检查 - 包括文本中的 XXX/YYY
+            if (details.负面词语) {
+                const negativeWords = [];
+                if (details.负面词语.词语列表) {
+                    negativeWords.push(...details.负面词语.词语列表);
+                }
+                
+                // 检查所有评价文本中是否包含 XXX 或 YYY
+                const allText = [
+                    details.答非所问?.评价,
+                    details.回复逻辑性?.评价,
+                    details.问题解决情况?.评价,
+                    details.办理时长?.评价,
+                    details.回复态度?.评价
+                ].join(' ');
+
+                if (allText.includes('XXX')) {
+                    negativeWords.push('XXX');
+                }
+                if (allText.includes('YYY')) {
+                    negativeWords.push('YYY');
+                }
+
+                html += `
+                    <div class="check-item ${negativeWords.length > 0 ? 'has-issue' : ''}">
+                        <strong>负面词语检查：</strong>
+                        ${negativeWords.length > 0 ? 
+                            `<ul><li>${negativeWords.join('、')}</li></ul>` : 
+                            '无'
+                        }
+                    </div>
+                `;
+            }
+
+            html += '</div>';
+            return html;
+        }
+
+        function exportResults() {
+            const wb = XLSX.utils.book_new();
+            
+            // 转换数据为适合导出的格式
+            const exportData = scoringResults.map((result, index) => ({
+                '序号': index + 1,
+                '总分': result.score,
+                '重点关注': result.重点关注 ? '是' : '否',
+                '答非所问_得分': result.evaluation_details.答非所问.得分,
+                '答非所问_评价': result.evaluation_details.答非所问.评价,
+                '回复逻辑性_得分': result.evaluation_details.回复逻辑性.得分,
+                '回复逻辑性_评价': result.evaluation_details.回复逻辑性.评价,
+                // ... 其他评分项
+                '建议': result.suggestions
+            }));
+            
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            XLSX.utils.book_append_sheet(wb, ws, "评分结果");
+            
+            XLSX.writeFile(wb, "评分结果.xlsx");
+        }
+
+        function handleDetailsToggle(detailsElement) {
+            const td = detailsElement.parentElement;
+            const suggestionTd = td.nextElementSibling;
+            
+            if (detailsElement.open) {
+                td.classList.add('expanded');
+                suggestionTd.classList.add('expanded-sibling');
+            } else {
+                td.classList.remove('expanded');
+                suggestionTd.classList.remove('expanded-sibling');
+            }
+        }
+    </script>
+
+    <style>
+        .concern-tag {
+            color: #ff4444;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .concern-reasons {
+            font-size: 0.9em;
+            color: #ff4444;
+            margin-top: 5px;
+        }
+
+        .suggestions-section {
+            margin: 0;
+            padding: 8px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            word-break: break-word;
+        }
+
+        .suggestion-content {
+            display: flex;
+            gap: 8px;
+            align-items: flex-start;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+
+        .score-details {
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+
+        /* 数据预览表格样式 */
+        .preview-section table {
+            table-layout: fixed;
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .preview-section table th,
+        .preview-section table td {
+            padding: 12px;
+            border: 1px solid #eee;
+            vertical-align: top;
+        }
+
+        /* 群众诉求文本列宽度最大 */
+        .preview-section table th:nth-child(1),
+        .preview-section table td:nth-child(1) {
+            width: 40%;
+        }
+
+        /* 类别列固定宽度 */
+        .preview-section table th:nth-child(2),
+        .preview-section table td:nth-child(2) {
+            width: 80px;
+        }
+
+        /* 办理时长列固定宽度 */
+        .preview-section table th:nth-child(3),
+        .preview-section table td:nth-child(3) {
+            width: 80px;
+            text-align: center;
+        }
+
+        /* 诉求回复内容列宽度较大 */
+        .preview-section table th:nth-child(4),
+        .preview-section table td:nth-child(4) {
+            width: 30%;
+        }
+
+        /* 办理人员自评列固定宽度 */
+        .preview-section table th:nth-child(5),
+        .preview-section table td:nth-child(5) {
+            width: 100px;
+            text-align: center;
+        }
+
+        /* 与群众沟通情况列固定宽度 */
+        .preview-section table th:nth-child(6),
+        .preview-section table td:nth-child(6) {
+            width: 120px;
+            text-align: center;
+        }
+
+        /* 评分结果表格样式 */
+        .results-section table {
+            table-layout: fixed;
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        /* 修改序号和总分列的样式 */
+        .results-section table th:nth-child(1), /* 序号列 */
+        .results-section table td:nth-child(1) {
+            width: 60px;
+            text-align: center !important; /* 强制居中 */
+        }
+
+        .results-section table th:nth-child(2), /* 总分列 */
+        .results-section table td:nth-child(2) {
+            width: 80px;
+            text-align: center !important; /* 强制居中 */
+        }
+
+        .results-section table th:nth-child(3), /* 重点关注列 */
+        .results-section table td:nth-child(3) {
+            width: 150px;
+        }
+
+        /* 详细评分和改进建议列的动态宽度 */
+        .results-section table th:nth-child(4), /* 详细评分列 */
+        .results-section table td:nth-child(4) {
+            width: 35%;
+            transition: width 0.3s ease;
+        }
+
+        .results-section table th:nth-child(5), /* 改进建议列 */
+        .results-section table td:nth-child(5) {
+            width: calc(100% - 60px - 80px - 150px - 35%);
+            transition: width 0.3s ease;
+        }
+
+        /* 当详细评分被展开时调整宽度 */
+        .results-section table td:nth-child(4).expanded {
+            width: 50%;
+        }
+
+        .results-section table td:nth-child(5).expanded-sibling {
+            width: calc(100% - 60px - 80px - 150px - 50%);
+        }
+
+        /* 通用表格样式 */
+        table th {
+            background-color: #f0f7ff;
+            font-weight: bold;
+            border-bottom: 2px solid #1a73e8;
+            white-space: nowrap;
+        }
+
+        table td {
+            background-color: #fff;
+            overflow-wrap: break-word;
+        }
+
+        /* 隔行变色 */
+        table tr:nth-child(even) td {
+            background-color: #f8f9fa;
+        }
+
+        .score-breakdown {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .score-item {
+            padding: 8px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .score-item.low-score {
+            background-color: #fff8f8;
+            border-left: 3px solid #ff4444;
+        }
+
+        .score-item .score {
+            font-weight: bold;
+            margin: 0 8px;
+        }
+
+        .check-item {
+            padding: 8px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .check-item.has-issue {
+            background-color: #fff8f8;
+            border-left: 3px solid #ff4444;
+        }
+
+        .check-item ul {
+            margin: 5px 0;
+            padding-left: 20px;
+        }
+
+        .error {
+            color: #ff4444;
+            padding: 10px;
+            background-color: #fff8f8;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+
+        .rule-note {
+            font-size: 0.8em;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        /* 总分显示的样式 */
+        .total-score {
+            position: relative;
+            display: flex;          /* 使用 flex 布局 */
+            justify-content: center; /* 水平居中 */
+            align-items: center;     /* 垂直居中 */
+        }
+
+        .score-number {
+            font-weight: bold;
+            font-size: 1.2em;
+            display: inline-block;  /* 确保数字本身也是块级元素 */
+            text-align: center;     /* 确保数字居中 */
+        }
+
+        /* 确保表格单元格内容居中 */
+        .results-section table td:nth-child(1),
+        .results-section table td:nth-child(2) {
+            vertical-align: middle; /* 垂直居中 */
+        }
+
+        .score-breakdown-tooltip {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 5px;
+            z-index: 10;
+            display: none;
+        }
+
+        .score-breakdown-tooltip:hover {
+            display: block;
+        }
+
+        /* 添加样式 */
+        .header-links {
+            margin: 10px 0 20px;
+            text-align: right;
+        }
+
+        .api-doc-link {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 15px;
+            background-color: #f0f7ff;
+            border: 1px solid #1a73e8;
+            border-radius: 4px;
+            color: #1a73e8;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .api-doc-link:hover {
+            background-color: #1a73e8;
+            color: white;
+        }
+
+        .api-doc-link .icon {
+            margin-right: 8px;
+        }
+    </style>
+</body>
+</html> 
