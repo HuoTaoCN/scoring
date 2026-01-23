@@ -43,7 +43,13 @@ def generate_prompt(data):
     negative_words = negative_words_config["负面词语"]
     
     return f"""
-你是一个诉求回复智能质检助手。请根据以下标准对群众网上诉求数据中的"诉求回复内容"进行评分，输出结构化 JSON 结果：
+你是一个工单办理质量智能检测系统（GovInsight-AI）。请根据以下标准对群众网上诉求数据中的"诉求回复内容"进行评分，并评估置信度，输出结构化 JSON 结果。
+
+请采用"思维链 (Chain of Thought)"模式进行研判：
+1. 首先分析群众诉求的核心痛点和关键信息。
+2. 然后检查回复内容是否完整覆盖了这些信息，是否存在回避、推诿或逻辑漏洞。
+3. 接着根据评分标准逐项打分。
+4. 最后综合评估，给出置信度（Confidence）和处置建议。
 
 【评分维度及标准】
 1️⃣ 答非所问（30分）：
@@ -108,9 +114,13 @@ def generate_prompt(data):
 以下是群众诉求数据：
 {json.dumps(data, ensure_ascii=False)}
 
-请仔细评估每个维度，确保评分准确。特别注意检查文本中是否包含错别字和负面词语，这些都会导致重点关注标记。输出格式要求：
+请仔细评估每个维度，确保评分准确。特别注意检查文本中是否包含错别字和负面词语，这些都会导致重点关注标记。
+同时，请给出一个置信度（confidence），范围0.0-1.0，表示你对本次评分准确性的信心。
+
+输出格式要求：
 {{
     "score": 总分,
+    "confidence": 0.xx,
     "evaluation_details": {{
         "答非所问": {{"得分": 整数, "评价": "说明"}},
         "回复逻辑性": {{"得分": 整数, "评价": "说明"}},
@@ -127,7 +137,8 @@ def generate_prompt(data):
         }}
     }},
     "重点关注": true/false,
-    "suggestions": "改进建议"
+    "suggestions": "改进建议",
+    "reasoning": "简要说明给出该置信度和评分的理由"
 }}
 
 注意：评估重点关注时，除了检查三个主要指标的低分外，还要检查是否存在错别字或负面词语，任一情况都应标记为重点关注。
@@ -240,6 +251,28 @@ def call_model(data):
                 # 更正重点关注标记
                 json_result['重点关注'] = should_be_concerned
                 
+                # 计算处置建议 (Handling Suggestion)
+                confidence = json_result.get('confidence', 0.8) # Default to 0.8 if missing
+                
+                handling_suggestion = ""
+                risk_level = ""
+                
+                if should_be_concerned:
+                    handling_suggestion = "强制复核 (Mandatory Review)"
+                    risk_level = "High"
+                elif confidence < 0.7:
+                    handling_suggestion = "强制复核 (Mandatory Review)"
+                    risk_level = "Medium" # Low confidence implies some risk/uncertainty
+                elif confidence < 0.85:
+                    handling_suggestion = "抽检复核 (Sampling)"
+                    risk_level = "Low"
+                else:
+                    handling_suggestion = "自动采信 (Auto-Pass)"
+                    risk_level = "None"
+                    
+                json_result['handling_suggestion'] = handling_suggestion
+                json_result['risk_level'] = risk_level
+
                 # 记录分数修正情况
                 if original_scores != {dim: details[dim].get('得分', 0) for dim in max_scores.keys()}:
                     logger.info(f"分数修正情况 - 原始分数: {original_scores}, 修正后: {json.dumps({dim: details[dim].get('得分', 0) for dim in max_scores.keys()}, ensure_ascii=False)}")
@@ -269,7 +302,10 @@ def call_model(data):
                         "负面词语": {"存在": False, "词语列表": []}
                     },
                     "重点关注": False,
-                    "suggestions": "模型返回格式错误，请重试"
+                    "suggestions": "模型返回格式错误，请重试",
+                    "confidence": 0,
+                    "handling_suggestion": "人工检查",
+                    "reasoning": "解析错误"
                 }
         else:
             return {
@@ -285,7 +321,10 @@ def call_model(data):
                     "负面词语": {"存在": False, "词语列表": []}
                 },
                 "重点关注": False,
-                "suggestions": "API调用失败，请重试"
+                "suggestions": "API调用失败，请重试",
+                "confidence": 0,
+                "handling_suggestion": "人工检查",
+                "reasoning": "API调用失败"
             }
             
     except Exception as e:
@@ -302,7 +341,10 @@ def call_model(data):
                 "负面词语": {"存在": False, "词语列表": []}
             },
             "重点关注": False,
-            "suggestions": "系统错误，请重试"
+            "suggestions": "系统错误，请重试",
+            "confidence": 0,
+            "handling_suggestion": "人工检查",
+            "reasoning": f"系统错误: {str(e)}"
         }
 
 @app.route('/batch_score', methods=['POST'])

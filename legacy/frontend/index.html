@@ -2,25 +2,26 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <title>诉求回复智能质检助手</title>
+    <title>工单办理质量智能检测系统 (GovInsight-AI)</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 <body>
     <div class="container">
-        <h1>诉求回复智能质检助手</h1>
-        
-        <!-- 在标题下方添加 -->
-        <div class="header-links">
-            <a href="http://localhost:5001/api_guide" target="_blank" class="api-doc-link">
-                <span class="icon">📘</span> API调用指南
-            </a>
-        </div>
+        <header class="app-header">
+            <h1>工单办理质量智能检测系统</h1>
+            <div class="subtitle">Intelligent Quality Inspection System for Work Order Handling</div>
+            <div class="header-links">
+                <a href="http://localhost:5001/api_guide" target="_blank" class="api-doc-link">
+                    <span class="icon">📘</span> API Reference
+                </a>
+            </div>
+        </header>
         
         <!-- 评分规则展示区 -->
         <div class="rules-section">
-            <h2>评分规则及标准</h2>
+            <h2>核心能力与评分标准</h2>
             <div class="rules-grid">
                 <!-- 第一栏 -->
                 <div class="rules-column">
@@ -85,6 +86,19 @@
                             <li>0-4分：怠慢、敷衍</li>
                         </ul>
                     </div>
+                </div>
+            </div>
+            
+            <!-- 智能分级处置策略（单独放在下方） -->
+            <div class="strategy-section" style="margin-top: 20px;">
+                <div class="rule-item strategy-rule" style="border: 2px solid #1a73e8; background-color: #f0f7ff;">
+                    <h4 style="color: #1a73e8;">🛡️ 智能分级处置策略 (Intelligent Strategy)</h4>
+                    <p>系统基于置信度 (Confidence) 和风险评估将工单分为三类：</p>
+                    <ul>
+                        <li><strong>✅ 自动采信 (Auto-Pass)：</strong> 置信度 ≥ 0.85 且无风险，直接通过。</li>
+                        <li><strong>👀 抽检复核 (Sampling)：</strong> 置信度 0.70 - 0.84，进入抽检池。</li>
+                        <li><strong>🚨 强制复核 (Mandatory Review)：</strong> 置信度 < 0.70 或存在高风险（如重点关注项），强制人工复核。</li>
+                    </ul>
                 </div>
             </div>
             
@@ -228,7 +242,8 @@
                 <table>
                     <tr>
                         <th>序号</th>
-                        <th>总分</th>
+                        <th>总分/置信度</th>
+                        <th>处置建议</th>
                         <th>重点关注</th>
                         <th>详细评分</th>
                         <th>改进建议</th>
@@ -307,7 +322,10 @@
                         <td>${index + 1}</td>
                         <td>
                             <div class="total-score">
-                                <span class="score-number">${finalScore}</span>
+                                <div class="score-number">${finalScore}</div>
+                                <div class="confidence-score" style="font-size: 0.8em; color: #666; margin-top: 4px;">
+                                    置信度: ${(result.confidence || 0).toFixed(2)}
+                                </div>
                                 <div class="score-breakdown-tooltip">
                                     答非所问：${details.答非所问?.得分 || 0}分<br>
                                     回复逻辑性：${details.回复逻辑性?.得分 || 0}分<br>
@@ -315,6 +333,11 @@
                                     办理时长：${details.办理时长?.得分 || 0}分<br>
                                     回复态度：${details.回复态度?.得分 || 0}分
                                 </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="handling-suggestion ${getSuggestionClass(result.handling_suggestion)}">
+                                ${result.handling_suggestion || '人工检查'}
                             </div>
                         </td>
                         <td>
@@ -342,7 +365,7 @@
                             <details onToggle="handleDetailsToggle(this)">
                                 <summary>查看详情</summary>
                                 <div class="score-details">
-                                    ${formatScoreDetails(result.evaluation_details)}
+                                    ${formatScoreDetails(result.evaluation_details, result.reasoning)}
                                 </div>
                             </details>
                         </td>
@@ -365,10 +388,28 @@
             resultsDiv.innerHTML = html;
         }
 
-        function formatScoreDetails(details) {
+        function getSuggestionClass(suggestion) {
+            if (!suggestion) return '';
+            if (suggestion.includes('自动采信')) return 'suggestion-auto-pass';
+            if (suggestion.includes('抽检复核')) return 'suggestion-sampling';
+            if (suggestion.includes('强制复核')) return 'suggestion-mandatory';
+            return '';
+        }
+
+        function formatScoreDetails(details, reasoning) {
             if (!details) return '<p class="error">无评分详情</p>';
             
             let html = '<div class="score-breakdown">';
+
+            // 添加 AI 思维链 (Reasoning)
+            if (reasoning) {
+                html += `
+                    <div class="reasoning-item" style="background-color: #e8f0fe; padding: 8px; border-radius: 4px; border-left: 3px solid #1a73e8; margin-bottom: 10px;">
+                        <strong>🧠 AI 研判 (Chain of Thought)：</strong>
+                        <div class="reasoning-text" style="margin-top: 4px; font-size: 0.9em; color: #333;">${reasoning}</div>
+                    </div>
+                `;
+            }
             
             // 修改分数项的显示逻辑
             const scoreItems = [
@@ -453,6 +494,9 @@
             const exportData = scoringResults.map((result, index) => ({
                 '序号': index + 1,
                 '总分': result.score,
+                '置信度': result.confidence,
+                '处置建议': result.handling_suggestion,
+                'AI研判理由': result.reasoning,
                 '重点关注': result.重点关注 ? '是' : '否',
                 '答非所问_得分': result.evaluation_details.答非所问.得分,
                 '答非所问_评价': result.evaluation_details.答非所问.评价,
