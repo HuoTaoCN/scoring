@@ -1,6 +1,6 @@
 import React from 'react';
 import type { WorkOrderInput } from '../types/quality_inspection';
-import { User, MessageSquare, FileText, Calendar, Edit3 } from 'lucide-react';
+import { MessageSquare, FileText, Calendar, Edit3 } from 'lucide-react';
 
 interface CaseEditorProps {
   input: WorkOrderInput;
