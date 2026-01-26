@@ -80,7 +80,7 @@ function App() {
       if (!isCustomMode) {
         alert("AI 服务暂时不可用。");
       } else {
-        const msg = "AI 分析失败。请检查：\n1. 后端服务是否已启动？\n2. 请尝试访问 http://localhost:8788 (Wrangler 端口)\n3. 检查控制台是否有 API 报错信息";
+        const msg = "AI 分析失败。请检查：\n1. 后端环境变量 (QWEN_API_KEY) 是否在 Cloudflare Dashboard 中配置正确？\n2. 后端服务日志是否有报错？";
         alert(msg);
       }
     } finally {
