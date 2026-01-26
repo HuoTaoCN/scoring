@@ -4,7 +4,7 @@ import { ScoreCard } from './components/ScoreCard';
 import { CaseEditor } from './components/CaseEditor';
 import { Tooltip } from './components/Tooltip';
 import { Logo } from './components/Logo';
-import { Activity, BrainCircuit, Play, ShieldCheck, UserCheck, CheckCircle, Edit3, HelpCircle, AlertTriangle, Github, FileText } from 'lucide-react';
+import { Activity, BrainCircuit, Play, ShieldCheck, UserCheck, CheckCircle, Edit3, HelpCircle, AlertTriangle, Github, FileText, Mail } from 'lucide-react';
 import { clsx } from 'clsx';
 import type { EvaluationResult, WorkOrderInput } from './types/quality_inspection';
 
@@ -502,7 +502,11 @@ function App() {
         <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-3">
           {/* Left: Copyright & Contact */}
           <div className="flex items-center gap-4">
-             <span className="font-medium text-gray-600">&copy; {new Date().getFullYear()} GovInsight-AI</span>
+             <span className="font-medium text-gray-600">&copy; {new Date().getFullYear()} sc.huotao.com</span>
+             <a href="mailto:mail@huotao.com" className="flex items-center gap-1.5 hover:text-gray-900 transition-colors">
+               <Mail size={14} />
+               <span>mail@huotao.com</span>
+             </a>
           </div>
 
           {/* Right: Links & Credit */}
@@ -515,7 +519,7 @@ function App() {
               <span>项目文档 (README)</span>
             </button>
             <a 
-              href="https://github.com/HuoTaoCN/GovInsight-AI" 
+              href="https://github.com/HuoTaoCN/scoring" 
               target="_blank" 
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 hover:text-gray-900 transition-colors"
@@ -523,6 +527,12 @@ function App() {
               <Github size={14} />
               <span>GitHub</span>
             </a>
+            <span className="flex items-center gap-1.5 border-l pl-4 border-gray-300">
+               <span>GPL v3.0 License</span>
+            </span>
+            <span className="flex items-center gap-1.5 border-l pl-4 border-gray-300">
+               <span>Powered by 见微 (AInsight)</span>
+            </span>
           </div>
         </div>
       </footer>
