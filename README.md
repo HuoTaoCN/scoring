@@ -7,9 +7,9 @@
 [![Version](https://img.shields.io/badge/Version-V0.5.0-orange?style=flat-square)](CHANGELOG.md)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 ![React](https://img.shields.io/badge/React-v19-20232A?style=flat-square&logo=react&logoColor=61DAFB)
-![Cloudflare](https://img.shields.io/badge/Cloudflare-Pages-F38020?style=flat-square&logo=cloudflare&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-v18+-43853D?style=flat-square&logo=node.js&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat-square&logo=typescript&logoColor=white)
-![Hono](https://img.shields.io/badge/Hono-v4-E36002?style=flat-square&logo=hono&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-v7-646CFF?style=flat-square&logo=vite&logoColor=white)
 ![LLM](https://img.shields.io/badge/LLM-Qwen--Plus-blueviolet?style=flat-square)
 
 [简体中文](#简体中文) | [English](#english-introduction)
@@ -126,12 +126,76 @@ npm run dev
 ```
 访问 `http://localhost:5173` 即可使用。
 
+### ☁️ 部署到 Cloudflare Pages (全栈部署)
+
+本项目支持通过 **Cloudflare Pages** 进行全栈部署，前端（Vite）和后端（Hono Functions）将运行在同一个域名下，无需跨域配置。
+
+1.  **准备环境**：
+    确保你已经安装了 wrangler CLI：
+    ```bash
+    npm install -g wrangler
+    ```
+
+2.  **设置环境变量**：
+    登录 Cloudflare Dashboard，进入你的 Pages 项目设置 -> **Environment variables**，添加以下变量：
+    *   `QWEN_API_KEY`: 你的阿里云 API Key
+    *   `QWEN_BASE_URL`: `https://dashscope.aliyuncs.com/compatible-mode/v1`
+    *   `QWEN_MODEL_NAME`: `qwen-plus-2025-12-01`
+
+3.  **本地预览 (推荐)**：
+    在 `web` 目录下运行以下命令，即可同时启动前端和后端：
+    ```bash
+    cd web
+    npm install
+    # 这一步会构建前端并启动 wrangler 本地环境
+    npm run build
+    npx wrangler pages dev dist --binding QWEN_API_KEY=your_key
+    ```
+
+4.  **一键部署**：
+    你可以直接通过命令行部署，或者连接 GitHub 仓库自动部署。
+    
+    **命令行部署**：
+    ```bash
+    cd web
+    npm run build
+    npx wrangler pages deploy dist --project-name govinsight-ai
+    ```
+    
+    **GitHub 自动部署 (推荐)**：
+    *   在 Cloudflare Pages 面板连接你的 GitHub 仓库。
+    *   **Build command**: `npm run build`
+    *   **Build output directory**: `dist`
+    *   **Root directory**: `web` (重要！因为前端代码在 web 目录下)
+
 ## 📄 许可证
 
 本项目采用 [GNU GPL v3.0](LICENSE) 许可证。
 
 ---
 
+<a name="english-introduction"></a>
+## English Introduction
+
+**GovInsight-AI** is an intelligent quality inspection system for government service hotline work orders, powered by **Large Language Models (LLM)**. It specifically addresses the pain points of consistency and quality verification between **"Citizen Appeals"** and **"Handling Replies"** in hotlines like 12345.
+
+By integrating the Qwen-Plus model, the system acts like a senior quality inspector, automatically comparing the original appeal with the department's reply. It accurately identifies issues such as **irrelevant answers, logical incoherence, incomplete solutions, and harsh attitudes**, while providing intelligent suggestions for revision.
+
+### ✨ Core Features
+
+1.  **🔍 Multi-dimensional Inspection**: Scans work orders based on 5 core dimensions: Relevance, Logic, Solution, Timeliness, and Attitude.
+2.  **🛡️ Risk Prevention**: Automatically detects typos and filters sensitive/negative words (e.g., "stop complaining").
+3.  **🧠 Explainable AI (CoT)**: Displays the full chain of thought reasoning for transparency.
+4.  **✨ Intelligent Revision**: Generates suggested replies for low-quality work orders.
+
+### 🚀 Quick Start
+
+1.  **Install**: `cd web && npm install`
+2.  **Config**: Create `.dev.vars` with your `QWEN_API_KEY`.
+3.  **Run**: `npm run dev`
+
+---
+
 <div align="center">
-Copyright © 2025 Huotao. All Rights Reserved.
+Copyright © 2026 Huotao. All Rights Reserved.
 </div>
