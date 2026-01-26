@@ -4,7 +4,7 @@ import { ScoreCard } from './components/ScoreCard';
 import { CaseEditor } from './components/CaseEditor';
 import { Tooltip } from './components/Tooltip';
 import { Logo } from './components/Logo';
-import { Activity, BrainCircuit, Play, ShieldCheck, UserCheck, CheckCircle, Edit3, HelpCircle, Mail, Github, FileText } from 'lucide-react';
+import { Activity, BrainCircuit, Play, ShieldCheck, UserCheck, CheckCircle, Edit3, HelpCircle, AlertTriangle, Github, FileText } from 'lucide-react';
 import { clsx } from 'clsx';
 import type { EvaluationResult, WorkOrderInput } from './types/quality_inspection';
 
@@ -12,10 +12,11 @@ const CUSTOM_CASE_ID = 'custom-case';
 
 // Initial empty state for custom case
 const INITIAL_CUSTOM_INPUT: WorkOrderInput = {
+  appeal_title: '',
   appeal_text: '',
   reply_text: '',
   metadata: {
-    category: '非咨询类',
+    category: '投诉',
     duration_days: 1,
     ticket_id: '20250114-NEW',
     timestamp: new Date().toLocaleString(),
