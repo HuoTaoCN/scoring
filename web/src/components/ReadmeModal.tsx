@@ -49,6 +49,32 @@ export const ReadmeModal: React.FC<ReadmeModalProps> = ({ isOpen, onClose }) => 
 ### 4. ✨ 智能辅助优化
 针对质量不佳的回复，AI 会自动生成**建议回复内容**，供办理人员参考，提升服务水平。
 
+## 📸 功能演示 (典型案例)
+
+### 场景一：标准高分案例 (Standard High Score)
+**AI 研判**：💯 100分 (优秀) | ✅ 自动采信
+![标准高分案例](/docs/images/case_high_score.png)
+
+### 场景二：关键信息缺失 (Missing Key Info)
+**AI 研判**：⚠️ 75分 (合格) | 🔍 建议抽检
+**改进点**：AI 发现回复遗漏了“盲道堵塞”这一关键安全隐患。
+![关键信息缺失](/docs/images/case_missing_info.png)
+
+### 场景三：风险降级 (Risk Downgrading)
+**AI 研判**：🚨 45分 (存在风险) | 👮 强制复核
+**警示**：AI 识别出群众扬言闹事（高风险），但回复轻描淡写。
+![风险降级](/docs/images/case_risk_downgrade.png)
+
+### 场景四：严重歪曲事实 (Fact Distortion)
+**AI 研判**：❌ 25分 (不合格) | 🔙 退回重写
+**警示**：将“投诉”篡改为“咨询”，试图规避考核，性质恶劣。
+![严重歪曲事实](/docs/images/case_fact_distortion.png)
+
+### 场景五：处理方式错误 (Handling Error)
+**AI 研判**：🚫 45分 (不合格) | 🔄 纠正流转
+**警示**：话务员越权直接办结执法类事项，流程违规。
+![处理方式错误](/docs/images/case_handling_error.png)
+
 ## 评分标准 (总分100分)
 | 维度 | 分值 | 说明 |
 | :--- | :--- | :--- |

@@ -2,7 +2,6 @@ name = "govinsight-ai"
 compatibility_date = "2025-01-18"
 pages_build_output_dir = "dist"
 
-# 环境变量占位符 (实际部署时请在 Cloudflare Dashboard 中配置)
 [vars]
 # QWEN_API_KEY = "..."
 QWEN_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"

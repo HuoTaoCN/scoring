@@ -5,7 +5,9 @@
   "license": "GPL-3.0",
   "type": "module",
   "scripts": {
-    "dev": "wrangler pages dev --proxy 5173 -- vite --port 5173",
+    "dev": "wrangler pages dev --command \"vite --port 5173\" --proxy 5173",
+    "dev:vite": "vite --port 5173",
+    "dev:wrangler": "wrangler pages dev --proxy 5173",
     "build": "tsc -b && vite build",
     "deploy": "npm run build && npx wrangler pages deploy dist",
     "lint": "eslint .",

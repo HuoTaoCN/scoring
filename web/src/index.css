@@ -1,7 +1,8 @@
 @import "tailwindcss";
 
-@layer base {
-  body {
-    @apply antialiased text-gray-800 bg-gray-50;
-  }
+@theme {
+  --color-brand-50: #eff6ff;
+  --color-brand-100: #dbeafe;
+  --color-brand-600: #2563eb;
+  --color-brand-700: #1d4ed8;
 }
