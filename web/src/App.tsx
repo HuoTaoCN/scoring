@@ -450,20 +450,20 @@ function App() {
                         position="bottom"
                         content={
                           <div className="w-72">
-                            <div className="font-bold mb-2 text-gray-700 border-b pb-1">AI 处置建议判定规则</div>
+                            <div className="font-bold mb-2 text-white border-b border-gray-700 pb-1">AI 处置建议判定规则</div>
                             <div className="space-y-2.5">
                               <div className="flex items-start gap-2">
-                                <span className="w-2 h-2 mt-1.5 rounded-full bg-red-600 shrink-0 shadow-sm"></span>
+                                <span className="w-2 h-2 mt-1.5 rounded-full bg-red-500 shrink-0 shadow-sm"></span>
                                 <div>
-                                  <span className="font-bold text-gray-800">退回重写 / 强制复核</span>
-                                  <div className="text-gray-500 scale-90 origin-top-left mt-0.5">存在严重质量问题（答非所问等）或触发敏感词/错别字。</div>
+                                  <span className="font-bold text-gray-100">退回重写 / 强制复核</span>
+                                  <div className="text-gray-400 scale-90 origin-top-left mt-0.5">存在严重质量问题（答非所问等）或触发敏感词/错别字。</div>
                                 </div>
                               </div>
                               <div className="flex items-start gap-2">
-                                <span className="w-2 h-2 mt-1.5 rounded-full bg-green-600 shrink-0 shadow-sm"></span>
+                                <span className="w-2 h-2 mt-1.5 rounded-full bg-green-500 shrink-0 shadow-sm"></span>
                                 <div>
-                                  <span className="font-bold text-gray-800">自动采信</span>
-                                  <div className="text-gray-500 scale-90 origin-top-left mt-0.5">工单质量优秀/合格，且 AI 置信度高。</div>
+                                  <span className="font-bold text-gray-100">自动采信</span>
+                                  <div className="text-gray-400 scale-90 origin-top-left mt-0.5">工单质量优秀/合格，且 AI 置信度高。</div>
                                 </div>
                               </div>
                             </div>
