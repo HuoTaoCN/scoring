@@ -160,7 +160,7 @@ function App() {
           <button
             onClick={handleAnalyze}
             disabled={isAnalyzing}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 md:px-6 py-2 rounded-full shadow-lg text-sm font-bold flex items-center gap-2 transition-all disabled:opacity-50 disabled:scale-95 active:scale-95 whitespace-nowrap"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 md:px-6 py-2 rounded-full shadow-lg text-sm font-bold flex items-center gap-2 transition-all disabled:opacity-50 active:scale-95 whitespace-nowrap"
           >
             {isAnalyzing ? (
               <>
