@@ -28,6 +28,7 @@ const INITIAL_CUSTOM_INPUT: WorkOrderInput = {
 import { RevisionView } from './components/RevisionView';
 
 import { ReadmeModal } from './components/ReadmeModal';
+import { ReportModal } from './components/ReportModal';
 
 function App() {
   const [selectedCaseId, setSelectedCaseId] = useState<string>(MOCK_CASES[0].id);
@@ -37,6 +38,7 @@ function App() {
   const [showResult, setShowResult] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<EvaluationResult | null>(null);
   const [isReadmeOpen, setIsReadmeOpen] = useState(false);
+  const [isReportOpen, setIsReportOpen] = useState(false);
 
   const isCustomMode = true; // Always enable editing mode
 
@@ -100,11 +102,9 @@ function App() {
       const mockCase = MOCK_CASES.find(c => c.id === id);
       if (mockCase) {
         setCustomInput(mockCase.input);
-        // We want to effectively treat this as "Custom Mode" but pre-filled
-        setSelectedCaseId(CUSTOM_CASE_ID); 
         
         // Restore the mock result initially so the user sees the demo state
-        setAnalysisResult(mockCase.result);
+        // setAnalysisResult(mockCase.result); // Don't set analysisResult, rely on currentMockCase logic
         setShowResult(true);
       } else {
         setShowResult(false);
@@ -115,6 +115,18 @@ function App() {
   const currentMockCase = MOCK_CASES.find(c => c.id === selectedCaseId);
   // Fallback to mock result if analysisResult is null and we are not in custom mode
   const displayResult = analysisResult || (selectedCaseId !== CUSTOM_CASE_ID ? currentMockCase?.result : null);
+  
+  // Use showResult to control visibility, ensuring it matches the UI state of the result cards
+  // We check if showResult is true AND if we have a valid result to display
+  const hasValidResult = showResult && (!!analysisResult || (selectedCaseId !== CUSTOM_CASE_ID && !!currentMockCase?.result));
+
+  console.log('Button Debug:', { 
+    showResult, 
+    analysisResult: !!analysisResult, 
+    isMock: selectedCaseId !== CUSTOM_CASE_ID,
+    mockResult: !!currentMockCase?.result,
+    hasValidResult 
+  });
 
   // Helper to localize overall_level
   const getLocalizedLevel = (level: string) => {
@@ -157,9 +169,22 @@ function App() {
               <p className="text-xs text-slate-400 hidden md:block">Intelligent Quality Inspection System for Work Order Handling</p>
             </div>
           </div>
-          <button
-            onClick={handleAnalyze}
-            disabled={isAnalyzing}
+          <div className="flex items-center gap-3">
+            {/* Generate Report Button */}
+            {hasValidResult && (
+              <button
+                onClick={() => setIsReportOpen(true)}
+                className="bg-slate-700 hover:bg-slate-600 text-white px-3 md:px-4 py-2 rounded-full shadow-md text-sm font-bold flex items-center gap-2 transition-all animate-in fade-in slide-in-from-right-4 z-20 relative"
+              >
+                <FileText size={16} />
+                <span className="hidden md:inline">生成质检报告</span>
+                <span className="md:hidden">报告</span>
+              </button>
+            )}
+
+            <button
+              onClick={handleAnalyze}
+              disabled={isAnalyzing}
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 md:px-6 py-2 rounded-full shadow-lg text-sm font-bold flex items-center gap-2 transition-all disabled:opacity-50 active:scale-95 whitespace-nowrap"
           >
             {isAnalyzing ? (
@@ -176,6 +201,7 @@ function App() {
               </>
             )}
           </button>
+          </div>
         </div>
       </header>
 
@@ -546,6 +572,13 @@ function App() {
       <ReadmeModal 
         isOpen={isReadmeOpen} 
         onClose={() => setIsReadmeOpen(false)} 
+      />
+
+      <ReportModal
+        isOpen={isReportOpen}
+        onClose={() => setIsReportOpen(false)}
+        result={analysisResult || (selectedCaseId !== CUSTOM_CASE_ID ? currentMockCase?.result || null : null)}
+        input={selectedCaseId === CUSTOM_CASE_ID ? customInput : (currentMockCase?.input || customInput)}
       />
     </div>
   );

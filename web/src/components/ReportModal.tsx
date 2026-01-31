@@ -1,0 +1,276 @@
+import { useRef, useState } from 'react';
+import { X, Download, FileText, CheckCircle, AlertTriangle, UserCheck, Printer } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import { EvaluationResult, WorkOrderInput } from '../types/quality_inspection';
+
+interface ReportModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  result: EvaluationResult | null;
+  input: WorkOrderInput;
+}
+
+export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps) {
+  const reportRef = useRef<HTMLDivElement>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  if (!isOpen || !result) return null;
+
+  const handleDownloadPDF = async () => {
+    if (!reportRef.current) return;
+    
+    setIsGenerating(true);
+    try {
+      const element = reportRef.current;
+      const canvas = await html2canvas(element, {
+        scale: 2, // Improve quality
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff'
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const ratio = Math.min(pdfWidth / imgWidth * 0.95, pdfHeight / imgHeight * 0.95);
+      
+      const imgX = (pdfWidth - imgWidth * ratio) / 2;
+      const imgY = 10; // top margin
+
+      // For long content, we might need multi-page support, 
+      // but for this MVP we'll fit to one page or scale down.
+      // Since it's a summary report, it should fit.
+      
+      // Calculate height based on width ratio to keep aspect ratio
+      const finalWidth = pdfWidth - 20; // 10mm margin each side
+      const finalHeight = (imgHeight * finalWidth) / imgWidth;
+
+      pdf.addImage(imgData, 'PNG', 10, 10, finalWidth, finalHeight);
+      pdf.save(`质检报告_${input.metadata.ticket_id || '未命名'}.pdf`);
+    } catch (error) {
+      console.error('PDF Generation failed:', error);
+      alert('生成 PDF 失败，请重试');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const getLevelColor = (level: string) => {
+    if (level === '优秀') return 'text-green-600 bg-green-50 border-green-200';
+    if (level === '合格') return 'text-blue-600 bg-blue-50 border-blue-200';
+    if (level === '存在风险') return 'text-orange-600 bg-orange-50 border-orange-200';
+    return 'text-red-600 bg-red-50 border-red-200';
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div 
+        className="bg-gray-100 rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-200"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b bg-white rounded-t-xl shrink-0">
+          <div className="flex items-center gap-2 text-gray-800">
+            <FileText className="text-blue-600" />
+            <h2 className="text-lg font-bold">质检报告预览</h2>
+          </div>
+          <button 
+            onClick={onClose}
+            className="p-1.5 hover:bg-gray-100 rounded-full text-gray-500 transition-colors"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Content Area (Scrollable) */}
+        <div className="flex-1 overflow-y-auto p-6 flex justify-center bg-gray-100">
+          {/* A4 Paper Look */}
+          <div 
+            ref={reportRef}
+            className="bg-white shadow-lg w-[210mm] min-h-[297mm] p-[15mm] text-slate-800 relative flex flex-col"
+          >
+            {/* Report Header */}
+            <div className="text-center border-b-2 border-slate-800 pb-4 mb-6">
+              <h1 className="text-2xl font-black tracking-widest text-slate-900 mb-2">工单办理质量智能检测报告</h1>
+              <p className="text-sm text-slate-500 uppercase tracking-wider">GovInsight-AI Intelligent Inspection Report</p>
+            </div>
+
+            {/* Basic Info */}
+            <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
+              <div className="p-3 bg-slate-50 rounded border border-slate-100">
+                <span className="text-slate-500 block text-xs mb-1">工单编号</span>
+                <span className="font-mono font-bold text-slate-700">{input.metadata.ticket_id}</span>
+              </div>
+              <div className="p-3 bg-slate-50 rounded border border-slate-100">
+                <span className="text-slate-500 block text-xs mb-1">检测时间</span>
+                <span className="font-mono font-bold text-slate-700">{new Date().toLocaleString()}</span>
+              </div>
+              <div className="p-3 bg-slate-50 rounded border border-slate-100">
+                <span className="text-slate-500 block text-xs mb-1">工单类别</span>
+                <span className="font-bold text-slate-700">{input.metadata.category}</span>
+              </div>
+              <div className="p-3 bg-slate-50 rounded border border-slate-100">
+                <span className="text-slate-500 block text-xs mb-1">办理部门</span>
+                <span className="font-bold text-slate-700">{input.metadata.handling_department}</span>
+              </div>
+            </div>
+
+            {/* Score Summary */}
+            <div className="mb-8">
+              <h3 className="font-bold text-lg border-l-4 border-blue-600 pl-3 mb-4">一、综合评价</h3>
+              <div className="flex items-center gap-6 bg-slate-50 p-6 rounded-lg border border-slate-100">
+                <div className="text-center px-6 border-r border-slate-200">
+                  <div className="text-xs text-slate-500 mb-1">总分</div>
+                  <div className={`text-4xl font-black ${
+                    result.total_score >= 90 ? "text-green-600" :
+                    result.total_score >= 75 ? "text-yellow-600" : "text-red-600"
+                  }`}>{result.total_score}</div>
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-4 mb-2">
+                    <span className="text-sm text-slate-500">评级结果:</span>
+                    <span className={`px-3 py-1 rounded text-sm font-bold border ${getLevelColor(result.overall_level)}`}>
+                      {result.overall_level}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm text-slate-500">处置建议:</span>
+                    {result.is_critical ? (
+                      <span className="flex items-center gap-1 text-red-700 font-bold text-sm">
+                        <UserCheck size={14} /> 强制人工复核
+                      </span>
+                    ) : result.confidence < 0.85 ? (
+                      <span className="flex items-center gap-1 text-orange-600 font-bold text-sm">
+                        <UserCheck size={14} /> 建议抽检
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1 text-green-700 font-bold text-sm">
+                        <CheckCircle size={14} /> 自动采信
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Dimension Details */}
+            <div className="mb-8">
+              <h3 className="font-bold text-lg border-l-4 border-blue-600 pl-3 mb-4">二、分项指标详情</h3>
+              <table className="w-full text-sm text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-100 text-slate-600">
+                    <th className="p-3 border-b font-bold">指标维度</th>
+                    <th className="p-3 border-b font-bold w-24 text-center">得分</th>
+                    <th className="p-3 border-b font-bold w-24 text-center">满分</th>
+                    <th className="p-3 border-b font-bold">评估理由</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {[
+                    { name: '答非所问', key: 'relevance', max: 30 },
+                    { name: '回复逻辑', key: 'logic', max: 30 },
+                    { name: '回复态度', key: 'attitude', max: 20 },
+                    { name: '解决情况', key: 'solution', max: 10 },
+                    { name: '办理时效', key: 'timeliness', max: 10 },
+                  ].map((item) => {
+                    const scoreData = result.scores[item.key as keyof typeof result.scores];
+                    return (
+                      <tr key={item.key}>
+                        <td className="p-3 font-medium text-slate-700">{item.name}</td>
+                        <td className="p-3 text-center font-bold">{scoreData.score}</td>
+                        <td className="p-3 text-center text-slate-400">{item.max}</td>
+                        <td className="p-3 text-slate-600 text-xs leading-relaxed">{scoreData.reason}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Risk Warnings */}
+            {(result.typo_check.typos.length > 0 || result.sensitive_word_check.has_sensitive_word) && (
+              <div className="mb-8">
+                <h3 className="font-bold text-lg border-l-4 border-orange-500 pl-3 mb-4">三、风险提示</h3>
+                <div className="space-y-3">
+                  {result.typo_check.typos.length > 0 && (
+                    <div className="bg-orange-50 p-4 rounded border border-orange-100">
+                      <h4 className="font-bold text-orange-800 text-sm mb-2 flex items-center gap-2">
+                        <AlertTriangle size={14} /> 错别字检测
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {result.typo_check.typos.map((t, i) => (
+                          <span key={i} className="text-xs bg-white px-2 py-1 rounded border border-orange-200 text-orange-700">
+                            {t.error} &rarr; {t.correct}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {result.sensitive_word_check.has_sensitive_word && (
+                    <div className="bg-red-50 p-4 rounded border border-red-100">
+                      <h4 className="font-bold text-red-800 text-sm mb-2 flex items-center gap-2">
+                        <AlertTriangle size={14} /> 敏感词检测
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {result.sensitive_word_check.words.map((w, i) => (
+                          <span key={i} className="text-xs bg-white px-2 py-1 rounded border border-red-200 text-red-700">
+                            {w}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Suggestion */}
+            <div className="mb-8">
+              <h3 className="font-bold text-lg border-l-4 border-blue-600 pl-3 mb-4">四、改进建议</h3>
+              <div className="bg-blue-50 p-4 rounded border border-blue-100 text-sm text-slate-700 leading-relaxed">
+                {result.suggestion}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="mt-auto pt-8 border-t border-slate-200 text-center text-xs text-slate-400">
+              <p>本报告由 GovInsight-AI 智能质检系统自动生成，仅供参考。</p>
+              <p>生成时间: {new Date().toLocaleString()}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer Actions */}
+        <div className="p-4 border-t bg-white rounded-b-xl flex justify-end gap-3 shrink-0">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors text-gray-700"
+          >
+            关闭
+          </button>
+          <button
+            onClick={handleDownloadPDF}
+            disabled={isGenerating}
+            className="px-6 py-2 bg-blue-600 border border-blue-600 rounded-lg text-sm font-bold text-white hover:bg-blue-700 transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isGenerating ? (
+              <>
+                <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"/>
+                生成中...
+              </>
+            ) : (
+              <>
+                <Download size={18} />
+                下载 PDF 报告
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

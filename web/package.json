@@ -17,6 +17,8 @@
     "@tailwindcss/typography": "^0.5.19",
     "clsx": "^2.1.1",
     "hono": "^4.11.4",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.0.0",
     "lucide-react": "^0.562.0",
     "mermaid": "^11.12.2",
     "openai": "^6.16.0",

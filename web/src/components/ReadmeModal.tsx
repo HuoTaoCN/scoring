@@ -20,7 +20,7 @@ function MermaidChart({ chart }: { chart: string }) {
   useEffect(() => {
     mermaid.initialize({ 
       startOnLoad: false,
-      theme: 'default',
+      theme: 'dark',
       securityLevel: 'loose',
     });
     
