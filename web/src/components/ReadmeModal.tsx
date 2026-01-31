@@ -53,6 +53,17 @@ export function ReadmeModal({ isOpen, onClose }: ReadmeModalProps) {
             <ReactMarkdown 
               remarkPlugins={[remarkGfm]}
               rehypePlugins={[rehypeRaw, rehypeSlug]}
+              components={{
+                img: ({node, src, ...props}) => {
+                  // Fix image paths: replace 'web/public/' with '/' to make them work in the app
+                  // GitHub README uses paths relative to repo root (web/public/...),
+                  // but in the app, 'public' folder contents are served at root.
+                  const finalSrc = src?.startsWith('web/public/') 
+                    ? src.replace('web/public/', '/') 
+                    : src;
+                  return <img src={finalSrc} {...props} />;
+                }
+              }}
             >
               {readmeContent}
             </ReactMarkdown>
