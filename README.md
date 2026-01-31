@@ -4,7 +4,7 @@
 
 **Intelligent Quality Inspection System for Work Order Handling**
 
-[![Version](https://img.shields.io/badge/Version-V0.5.0-orange?style=flat-square)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-V0.6.0-orange?style=flat-square)](CHANGELOG.md)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 ![React](https://img.shields.io/badge/React-v19-20232A?style=flat-square&logo=react&logoColor=61DAFB)
 ![Node.js](https://img.shields.io/badge/Node.js-v18+-43853D?style=flat-square&logo=node.js&logoColor=white)
@@ -119,6 +119,19 @@ graph TD
     Functions -->|"结果解析"| Web
     Web -->|"可视化报告"| User
 ```
+
+## 🗺️ 路线图 (Roadmap)
+
+*   ✅ **V0.1**: 基础评分功能 (Basic Scoring)
+*   ✅ **V0.2**: 置信度评估与分级处置 (Confidence & Bucketing)
+*   ✅ **V0.3**: UI 重构、条件式修正生成、Mock 演示模式
+    *   *V0.3.2*: 一键自动化部署脚本、模型配置化、Node.js 运行时自动管理。
+    *   *V0.3.1*: Dashboard 布局重构、评分标准 Tooltip、新 Logo 设计。
+*   ✅ **V0.4**: 检查工单直接办结与转办逻辑 (Direct vs Dispatch)
+*   ✅ **V0.5**: 批量质检的调用和返回接口
+*   ✅ **V0.6**: 生成工单质检报告 (PDF Export)
+*   ⬜ **V0.7**: 增加语音实时录入、音频上传转文字功能
+*   ⬜ **V1.0**: 完整的仪表盘 (Dashboard) 与多租户支持
 
 ## 🛠️ 技术栈
 

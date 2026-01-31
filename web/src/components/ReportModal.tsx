@@ -182,10 +182,26 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
               </table>
             </div>
 
+            {/* Critical Reasons (Forced Review Reasons) */}
+            {result.is_critical && result.critical_reasons && result.critical_reasons.length > 0 && (
+              <div className="mb-8">
+                <h3 className="font-bold text-lg border-l-4 border-red-600 pl-3 mb-4">三、强制复核原因</h3>
+                <div className="bg-red-50 p-4 rounded border border-red-100">
+                  <ul className="list-disc pl-5 space-y-2">
+                    {result.critical_reasons.map((reason, idx) => (
+                      <li key={idx} className="text-sm text-red-800 font-medium">
+                        {reason}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+
             {/* Risk Warnings */}
             {(result.typo_check.typos.length > 0 || result.sensitive_word_check.has_sensitive_word) && (
               <div className="mb-8">
-                <h3 className="font-bold text-lg border-l-4 border-orange-500 pl-3 mb-4">三、风险提示</h3>
+                <h3 className="font-bold text-lg border-l-4 border-orange-500 pl-3 mb-4">四、风险提示</h3>
                 <div className="space-y-3">
                   {result.typo_check.typos.length > 0 && (
                     <div className="bg-orange-50 p-4 rounded border border-orange-100">
@@ -221,10 +237,20 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
 
             {/* Suggestion */}
             <div className="mb-8">
-              <h3 className="font-bold text-lg border-l-4 border-blue-600 pl-3 mb-4">四、改进建议</h3>
-              <div className="bg-blue-50 p-4 rounded border border-blue-100 text-sm text-slate-700 leading-relaxed">
+              <h3 className="font-bold text-lg border-l-4 border-blue-600 pl-3 mb-4">五、改进建议</h3>
+              <div className="bg-blue-50 p-4 rounded border border-blue-100 text-sm text-slate-700 leading-relaxed mb-4">
+                <h4 className="font-bold text-blue-800 mb-2">综合建议：</h4>
                 {result.suggestion}
               </div>
+              
+              {result.suggested_reply && (
+                <div className="bg-green-50 p-4 rounded border border-green-100 text-sm text-slate-700 leading-relaxed">
+                  <h4 className="font-bold text-green-800 mb-2">AI 优化回复参考：</h4>
+                  <div className="whitespace-pre-wrap font-mono text-xs bg-white p-3 rounded border border-green-200 text-slate-600">
+                    {result.suggested_reply}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Footer */}
