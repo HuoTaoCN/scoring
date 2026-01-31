@@ -152,47 +152,53 @@ function App() {
           <div className="flex items-center gap-3">
             <Logo className="text-blue-400" />
             <div>
-              <h1 className="text-xl font-bold tracking-tight">工单办理质量智能检测系统 <span className="text-xs font-normal text-slate-500 bg-slate-800 px-1.5 py-0.5 rounded ml-2">V0.5.0</span></h1>
-              <p className="text-xs text-slate-400">Intelligent Quality Inspection System for Work Order Handling</p>
+              <h1 className="text-xl font-bold tracking-tight hidden md:block">工单办理质量智能检测系统 <span className="text-xs font-normal text-slate-500 bg-slate-800 px-1.5 py-0.5 rounded ml-2">V0.5.0</span></h1>
+              <h1 className="text-lg font-bold tracking-tight md:hidden">GovInsight-AI</h1>
+              <p className="text-xs text-slate-400 hidden md:block">Intelligent Quality Inspection System for Work Order Handling</p>
             </div>
           </div>
           <button
             onClick={handleAnalyze}
             disabled={isAnalyzing}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full shadow-lg text-sm font-bold flex items-center gap-2 transition-all disabled:opacity-50 disabled:scale-95 active:scale-95"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 md:px-6 py-2 rounded-full shadow-lg text-sm font-bold flex items-center gap-2 transition-all disabled:opacity-50 disabled:scale-95 active:scale-95 whitespace-nowrap"
           >
             {isAnalyzing ? (
               <>
                 <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"/>
-                AI 正在质检...
+                <span className="hidden md:inline">AI 正在质检...</span>
+                <span className="md:hidden">质检中...</span>
               </>
             ) : (
               <>
                 <Play size={16} fill="currentColor" />
-                开始智能质检
+                <span className="hidden md:inline">开始智能质检</span>
+                <span className="md:hidden">开始质检</span>
               </>
             )}
           </button>
         </div>
       </header>
 
-      <main className="flex-1 container mx-auto p-4 grid grid-cols-12 gap-4 min-h-0 overflow-hidden">
+      <main className="flex-1 container mx-auto p-4 flex flex-col lg:grid lg:grid-cols-12 gap-4 lg:min-h-0 overflow-y-auto lg:overflow-hidden">
         {/* Sidebar: Case Selector */}
-        <div className="col-span-12 lg:col-span-2 flex flex-col h-full overflow-hidden">
-          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 shrink-0">测试案例</h2>
-          <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+        <div className="lg:col-span-2 flex flex-col lg:h-full h-auto lg:overflow-hidden shrink-0 order-1">
+          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 shrink-0 flex items-center justify-between lg:block">
+            测试案例
+            <span className="lg:hidden text-[10px] bg-gray-200 px-1.5 py-0.5 rounded text-gray-500">左右滑动选择</span>
+          </h2>
+          <div className="lg:flex-1 lg:overflow-y-auto lg:space-y-2 lg:pr-1 flex flex-row space-x-2 overflow-x-auto pb-2 lg:pb-0 lg:flex-col lg:space-x-0">
             {MOCK_CASES.map((c) => (
               <button
                 key={c.id}
                 onClick={() => handleCaseChange(c.id)}
                 className={clsx(
-                  "w-full text-left p-3 rounded-lg border transition-all text-sm",
+                  "lg:w-full min-w-[160px] w-[160px] lg:min-w-0 text-left p-3 rounded-lg border transition-all text-sm shrink-0",
                   selectedCaseId === c.id
                     ? "bg-white border-blue-500 shadow-md ring-1 ring-blue-500"
                     : "bg-white border-gray-200 hover:border-blue-300 text-gray-600"
                 )}
               >
-                <div className="font-bold mb-1">{c.name}</div>
+                <div className="font-bold mb-1 truncate">{c.name}</div>
                 <div className="text-xs text-gray-400 line-clamp-2">{c.description}</div>
               </button>
             ))}
@@ -201,22 +207,22 @@ function App() {
             <button
               onClick={() => handleCaseChange(CUSTOM_CASE_ID)}
               className={clsx(
-                "w-full text-left p-3 rounded-lg border-2 border-dashed transition-all text-sm flex items-center gap-2 group",
+                "lg:w-full min-w-[160px] w-[160px] lg:min-w-0 text-left p-3 rounded-lg border-2 border-dashed transition-all text-sm flex items-center gap-2 group shrink-0",
                 isCustomMode
                   ? "bg-blue-50 border-blue-500 text-blue-700"
                   : "bg-transparent border-gray-300 text-gray-500 hover:border-blue-400 hover:text-blue-600"
               )}
             >
-              <div className="bg-white p-1.5 rounded-full border shadow-sm group-hover:scale-110 transition-transform">
+              <div className="bg-white p-1.5 rounded-full border shadow-sm group-hover:scale-110 transition-transform shrink-0">
                 <Edit3 size={14} />
               </div>
-              <div className="font-bold">手动录入测试</div>
+              <div className="font-bold truncate">手动录入</div>
             </button>
           </div>
         </div>
 
         {/* Center: Work Order Input (Appeal & Reply) */}
-        <div className="col-span-12 lg:col-span-3 flex flex-col h-full gap-3 overflow-hidden">
+        <div className="lg:col-span-3 flex flex-col lg:h-full h-auto gap-3 lg:overflow-hidden order-2">
             <CaseEditor 
               input={customInput} 
               onChange={setCustomInput} 
@@ -224,20 +230,20 @@ function App() {
         </div>
 
         {/* Right: AI Analysis Result */}
-        <div className="col-span-12 lg:col-span-3 flex flex-col h-full gap-3 overflow-hidden">
-          <div className="shrink-0 flex items-center gap-2 mb-0">
+        <div className="lg:col-span-3 flex flex-col lg:h-full h-auto gap-3 lg:overflow-hidden order-3">
+          <div className="shrink-0 flex items-center gap-2 mb-0 mt-4 lg:mt-0">
             <BrainCircuit size={18} className="text-purple-600" />
             <h2 className="text-lg font-bold text-gray-800">2. AI 质检报告</h2>
           </div>
 
           {/* Score Card Container */}
-          <div className="flex-[2.33] min-h-0 bg-white rounded-lg border border-blue-200 shadow-sm ring-2 ring-blue-50 flex flex-col">
+          <div className="lg:flex-[2.33] min-h-0 bg-white rounded-lg border border-blue-200 shadow-sm ring-2 ring-blue-50 flex flex-col">
             <div className="bg-blue-50 border-b border-blue-100 px-4 py-2.5 flex items-center gap-2 shrink-0 rounded-t-lg">
                <Activity size={18} className="text-blue-700" />
                <h3 className="font-bold text-blue-800">质检得分</h3>
             </div>
             
-            <div className="p-3 flex-1 overflow-y-auto">
+            <div className="p-3 lg:flex-1 lg:overflow-y-auto">
               {showResult && displayResult ? (
                 <div className="space-y-3">
                   {/* Total Score Summary */}
@@ -310,7 +316,7 @@ function App() {
                   </div>
                 </div>
               ) : (
-                <div className="h-full flex flex-col items-center justify-center text-gray-400">
+                <div className="h-32 lg:h-full flex flex-col items-center justify-center text-gray-400">
                   <div className="bg-gray-50 p-3 rounded-full mb-3">
                     <Activity size={24} className="opacity-20" />
                   </div>
@@ -321,15 +327,15 @@ function App() {
           </div>
 
           {/* Reasoning Container */}
-          <div className="flex-1 min-h-0 bg-white rounded-lg border border-blue-200 shadow-sm overflow-hidden ring-2 ring-blue-50 flex flex-col">
+          <div className="flex-1 min-h-0 bg-white rounded-lg border border-blue-200 shadow-sm lg:overflow-hidden ring-2 ring-blue-50 flex flex-col mt-3 lg:mt-0">
             <div className="bg-blue-50 border-b border-blue-100 px-4 py-3 flex items-center gap-2 shrink-0">
                <BrainCircuit size={18} className="text-blue-700" />
                <h3 className="font-bold text-blue-800">思考过程</h3>
             </div>
             
-            <div className="p-4 flex-1 overflow-y-auto">
+            <div className="p-4 lg:flex-1 lg:overflow-y-auto">
                {showResult && displayResult && displayResult.reasoning_trace ? (
-                 <div className="bg-gray-50 text-gray-700 p-4 rounded-lg border border-gray-200 text-sm leading-relaxed font-mono h-full overflow-y-auto">
+                 <div className="bg-gray-50 text-gray-700 p-4 rounded-lg border border-gray-200 text-sm leading-relaxed font-mono lg:h-full lg:overflow-y-auto">
                     <div className="whitespace-pre-wrap">
                       {displayResult.reasoning_trace.split(/(?:;|\d+\.)/).map((segment, index) => {
                         const trimmed = segment.trim();
@@ -344,7 +350,7 @@ function App() {
                     </div>
                  </div>
                ) : (
-                <div className="h-full flex flex-col items-center justify-center text-gray-400">
+                <div className="h-32 lg:h-full flex flex-col items-center justify-center text-gray-400">
                   <div className="bg-gray-50 p-3 rounded-full mb-3">
                     <BrainCircuit size={24} className="opacity-20" />
                   </div>
@@ -356,14 +362,14 @@ function App() {
         </div>
 
         {/* New Column: 3. Action & Revision */}
-        <div className="col-span-12 lg:col-span-4 flex flex-col h-full gap-3 overflow-hidden">
-          <div className="shrink-0 flex items-center gap-2 mb-0">
+        <div className="lg:col-span-4 flex flex-col lg:h-full h-auto gap-3 lg:overflow-hidden order-4">
+          <div className="shrink-0 flex items-center gap-2 mb-0 mt-4 lg:mt-0">
             <ShieldCheck size={18} className="text-green-600" />
             <h2 className="text-lg font-bold text-gray-800">3. 处置建议与优化</h2>
           </div>
 
           {/* Confidence & Action Card */}
-          <div className="flex-1 min-h-0 bg-white rounded-lg border border-blue-200 shadow-sm ring-2 ring-blue-50 flex flex-col">
+          <div className="lg:flex-1 min-h-0 bg-white rounded-lg border border-blue-200 shadow-sm ring-2 ring-blue-50 flex flex-col">
             <div className="bg-blue-50 border-b border-blue-100 px-4 py-3 flex justify-between items-center rounded-t-lg shrink-0">
               <div className="flex items-center gap-2">
                 <ShieldCheck size={18} className="text-blue-700" />
@@ -371,7 +377,7 @@ function App() {
               </div>
             </div>
             
-            <div className="p-4 flex-1 overflow-y-auto">
+            <div className="p-4 lg:flex-1 lg:overflow-y-auto">
               {showResult && displayResult ? (
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
@@ -479,7 +485,7 @@ function App() {
                   </div>
                 </div>
               ) : (
-                <div className="h-full flex flex-col items-center justify-center text-gray-400">
+                <div className="h-32 lg:h-full flex flex-col items-center justify-center text-gray-400">
                   <div className="bg-gray-50 p-3 rounded-full mb-3">
                     <ShieldCheck size={24} className="opacity-20" />
                   </div>
@@ -490,7 +496,7 @@ function App() {
           </div>
 
           {/* Auto-generated Revision */}
-          <div className="flex-1 min-h-0 flex flex-col">
+          <div className="lg:flex-1 min-h-0 flex flex-col mt-3 lg:mt-0">
             <RevisionView 
               isAnalyzed={showResult && !!displayResult}
               suggestedReply={displayResult?.suggested_reply}

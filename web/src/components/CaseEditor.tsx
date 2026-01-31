@@ -42,7 +42,7 @@ export const CaseEditor: React.FC<CaseEditorProps> = ({ input, onChange }) => {
   };
 
   return (
-    <div className="flex flex-col h-full gap-3 overflow-hidden">
+    <div className="flex flex-col lg:h-full h-auto gap-3 lg:overflow-hidden">
       {/* Title Header */}
       <div className="flex items-center gap-2 shrink-0">
         <Edit3 size={18} className="text-gray-600" />
@@ -50,7 +50,7 @@ export const CaseEditor: React.FC<CaseEditorProps> = ({ input, onChange }) => {
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 overflow-y-auto min-h-0 pr-1 space-y-3 flex flex-col">
+      <div className="flex-1 lg:overflow-y-auto overflow-visible min-h-0 lg:pr-1 space-y-3 flex flex-col">
         
         {/* Appeal Input (群众诉求) */}
         <div className="bg-white rounded-lg border border-purple-200 shadow-sm overflow-hidden ring-2 ring-purple-50 flex flex-col min-h-[180px]">
