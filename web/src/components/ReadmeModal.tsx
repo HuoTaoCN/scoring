@@ -27,10 +27,16 @@ export const ReadmeModal: React.FC<ReadmeModalProps> = ({ isOpen, onClose }) => 
                remarkPlugins={[remarkGfm]} 
                rehypePlugins={[rehypeRaw]}
                components={{
-                 // Custom renderer for images to ensure they look good
-                 img: ({node, ...props}) => (
-                   <img {...props} className="rounded-lg shadow-md border border-gray-200 my-4 max-w-full" />
-                 ),
+                 img: ({node, ...props}) => {
+                   const src = props.src || '';
+                   const isBadge = src.includes('shields.io') || src.includes('badge');
+                   if (isBadge) {
+                     return <img {...props} className="inline-block mx-1 my-1 align-middle" />;
+                   }
+                   return (
+                     <img {...props} className="rounded-lg shadow-md border border-gray-200 my-4 max-w-full block" />
+                   );
+                 },
                  // Ensure links open in new tab
                  a: ({node, ...props}) => (
                    <a {...props} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800" />
