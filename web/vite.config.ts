@@ -8,6 +8,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  assetsInclude: ['**/*.md'],
   server: {
     port: 5173,
     host: true,
