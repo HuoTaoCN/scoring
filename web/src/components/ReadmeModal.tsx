@@ -21,16 +21,22 @@ export const ReadmeModal: React.FC<ReadmeModalProps> = ({ isOpen, onClose }) => 
                 <X size={20} className="text-gray-500" />
             </button>
         </div>
-        <div className="flex-1 overflow-y-auto p-6 prose prose-slate max-w-none">
-           <ReactMarkdown 
-             remarkPlugins={[remarkGfm]} 
-             rehypePlugins={[rehypeRaw]}
-             components={{
-               img: ({node, ...props}) => (
-                 <img {...props} className="rounded-lg shadow-md border border-gray-200 my-4" />
-               )
-             }}
-           >
+        <div className="flex-1 overflow-y-auto p-6">
+           <div className="prose prose-slate max-w-none prose-img:rounded-lg prose-img:shadow-md prose-headings:scroll-mt-20">
+             <ReactMarkdown 
+               remarkPlugins={[remarkGfm]} 
+               rehypePlugins={[rehypeRaw]}
+               components={{
+                 // Custom renderer for images to ensure they look good
+                 img: ({node, ...props}) => (
+                   <img {...props} className="rounded-lg shadow-md border border-gray-200 my-4 max-w-full" />
+                 ),
+                 // Ensure links open in new tab
+                 a: ({node, ...props}) => (
+                   <a {...props} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800" />
+                 )
+               }}
+             >
 {`<div align="center">
 
 # GovInsight-AI 工单办理质量智能检测系统
