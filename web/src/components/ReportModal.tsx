@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { X, Download, FileText, CheckCircle, AlertTriangle, UserCheck, Printer } from 'lucide-react';
+import { X, Download, FileText, CheckCircle, AlertTriangle, UserCheck } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { EvaluationResult, WorkOrderInput } from '../types/quality_inspection';
@@ -33,17 +33,8 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
       const imgWidth = canvas.width;
       const imgHeight = canvas.height;
-      const ratio = Math.min(pdfWidth / imgWidth * 0.95, pdfHeight / imgHeight * 0.95);
-      
-      const imgX = (pdfWidth - imgWidth * ratio) / 2;
-      const imgY = 10; // top margin
-
-      // For long content, we might need multi-page support, 
-      // but for this MVP we'll fit to one page or scale down.
-      // Since it's a summary report, it should fit.
       
       // Calculate height based on width ratio to keep aspect ratio
       const finalWidth = pdfWidth - 20; // 10mm margin each side
@@ -181,9 +172,9 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
                     return (
                       <tr key={item.key}>
                         <td className="p-3 font-medium text-slate-700">{item.name}</td>
-                        <td className="p-3 text-center font-bold">{scoreData.score}</td>
+                        <td className="p-3 text-center font-bold">{scoreData?.score ?? '-'}</td>
                         <td className="p-3 text-center text-slate-400">{item.max}</td>
-                        <td className="p-3 text-slate-600 text-xs leading-relaxed">{scoreData.reason}</td>
+                        <td className="p-3 text-slate-600 text-xs leading-relaxed">{scoreData?.judgement ?? '暂无评价'}</td>
                       </tr>
                     );
                   })}
