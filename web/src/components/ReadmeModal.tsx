@@ -3,12 +3,41 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import rehypeSlug from 'rehype-slug';
+import mermaid from 'mermaid';
+import { useEffect, useState, useId } from 'react';
 // @ts-ignore
 import readmeContent from '../../../README.md?raw';
 
 interface ReadmeModalProps {
   isOpen: boolean;
   onClose: () => void;
+}
+
+function MermaidChart({ chart }: { chart: string }) {
+  const id = useId().replace(/:/g, ''); // unique id, remove colons for valid css selector
+  const [svg, setSvg] = useState('');
+  
+  useEffect(() => {
+    mermaid.initialize({ 
+      startOnLoad: false,
+      theme: 'default',
+      securityLevel: 'loose',
+    });
+    
+    const renderChart = async () => {
+      try {
+        const { svg } = await mermaid.render(`mermaid-${id}`, chart);
+        setSvg(svg);
+      } catch (error) {
+        console.error('Mermaid render error:', error);
+        setSvg('<div class="text-red-500">Error rendering chart</div>');
+      }
+    };
+    
+    renderChart();
+  }, [chart, id]);
+
+  return <div className="flex justify-center my-4" dangerouslySetInnerHTML={{ __html: svg }} />;
 }
 
 export function ReadmeModal({ isOpen, onClose }: ReadmeModalProps) {
@@ -62,6 +91,20 @@ export function ReadmeModal({ isOpen, onClose }: ReadmeModalProps) {
                     ? src.replace('web/public/', '/') 
                     : src;
                   return <img src={finalSrc} {...props} />;
+                },
+                code: ({node, className, children, ...props}) => {
+                  const match = /language-(\w+)/.exec(className || '');
+                  const isMermaid = match && match[1] === 'mermaid';
+                  
+                  if (isMermaid) {
+                    return <MermaidChart chart={String(children).replace(/\n$/, '')} />;
+                  }
+                  
+                  return (
+                    <code className={className} {...props}>
+                      {children}
+                    </code>
+                  );
                 }
               }}
             >
