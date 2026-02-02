@@ -71,39 +71,100 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
         
         // Set canvas width to full image width
         canvas.width = imgProps.width;
-        // Set canvas height to one page worth of pixels
-        canvas.height = pageContentHeight * scaleFactor;
+        // Set canvas height to one page worth of pixels (scaled)
+        const pagePixelHeight = pageContentHeight * scaleFactor;
+        canvas.height = pagePixelHeight;
 
         // Create an Image object from the data URL
         const srcImg = new Image();
         srcImg.src = imgData;
         await new Promise((resolve) => { srcImg.onload = resolve; });
 
+        // Track exact pixel position in source image
+        let currentSrcY = 0;
+
         while (heightLeft > 0) {
           if (position > 0) {
             pdf.addPage();
           }
           
-          // Clear canvas
+          // Determine the target height for this slice (default to full page)
+          let currentSliceHeight = pagePixelHeight;
+          
+          // If this is not the last page, check if we need to shorten the slice to avoid cutting text
+          // Only perform this check if we have enough content left to justify checking
+          if (heightLeft > pageContentHeight) {
+            const checkCanvas = document.createElement('canvas');
+            checkCanvas.width = imgProps.width;
+            checkCanvas.height = 100; // Look at bottom 100 pixels of this page
+            const checkCtx = checkCanvas.getContext('2d');
+            
+            if (checkCtx) {
+              // Draw the bottom area of what would be this page
+              const potentialBottomY = currentSrcY + pagePixelHeight;
+              
+              // Ensure we don't read past the image end
+              if (potentialBottomY <= imgProps.height) {
+                  checkCtx.drawImage(srcImg, 0, potentialBottomY - 100, imgProps.width, 100, 0, 0, imgProps.width, 100);
+                  const imageData = checkCtx.getImageData(0, 0, checkCanvas.width, checkCanvas.height);
+                  const data = imageData.data;
+                  
+                  // Find white row from bottom up
+                  for (let y = 99; y >= 0; y--) {
+                    let isRowWhite = true;
+                    // Check center 80% of width to avoid potential side borders/shadows
+                    const startX = Math.floor(checkCanvas.width * 0.1);
+                    const endX = Math.floor(checkCanvas.width * 0.9);
+                    
+                    for (let x = startX; x < endX; x += 5) { // Step by 5 for perf
+                      const i = (y * checkCanvas.width + x) * 4;
+                      // Strict white check: R,G,B > 250
+                      if (data[i] < 250 || data[i+1] < 250 || data[i+2] < 250) {
+                        isRowWhite = false;
+                        break;
+                      }
+                    }
+                    if (isRowWhite) {
+                      // Found a safe cut point!
+                      // Reduce slice height to cut here
+                      const pixelsFromBottom = 99 - y;
+                      // Add a small buffer (e.g. 5px) to ensure we cut IN the whitespace
+                      currentSliceHeight -= (pixelsFromBottom + 5); 
+                      break;
+                    }
+                  }
+              }
+            }
+          }
+
+          // Ensure we don't go past end of image
+          currentSliceHeight = Math.min(currentSliceHeight, imgProps.height - currentSrcY);
+          
+          // Safety check: if slice became too small (e.g. huge image with no whitespace), revert to full page
+          if (currentSliceHeight < 100) currentSliceHeight = Math.min(pagePixelHeight, imgProps.height - currentSrcY);
+
+          // Resize canvas to fit exactly this slice
+          canvas.height = currentSliceHeight;
+          
+          // Clear and fill white
           ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
           
-          // Source Y position in pixels
-          const srcY = position * pageContentHeight * scaleFactor;
-          // Source height to copy (might be less for the last page)
-          const srcH = Math.min(canvas.height, imgProps.height - srcY);
+          // Draw the adjusted slice
+          ctx.drawImage(srcImg, 0, currentSrcY, imgProps.width, currentSliceHeight, 0, 0, imgProps.width, currentSliceHeight);
           
-          // Draw the slice
-          ctx.drawImage(srcImg, 0, srcY, imgProps.width, srcH, 0, 0, imgProps.width, srcH);
-          
-          // Convert slice to data URL
           const sliceData = canvas.toDataURL('image/png');
+          const slicePdfHeight = currentSliceHeight / scaleFactor;
           
-          // Calculate height of this slice in PDF units
-          const slicePdfHeight = srcH / scaleFactor;
+          // Centering Logic
+          const xOffset = margin + (availableWidth - (imgProps.width / scaleFactor)) / 2;
           
-          pdf.addImage(sliceData, 'PNG', margin, margin, availableWidth, slicePdfHeight);
+          pdf.addImage(sliceData, 'PNG', xOffset, margin, availableWidth, slicePdfHeight);
           
-          heightLeft -= pageContentHeight;
+          // Advance counters
+          heightLeft -= slicePdfHeight; // Approximate PDF height remaining
+          currentSrcY += currentSliceHeight; // Advance pixel pointer
           position++;
         }
       }
