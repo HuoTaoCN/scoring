@@ -26,22 +26,96 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
     try {
       const element = reportRef.current;
       
-      // Use html-to-image with explicit dimensions to ensure full capture of scrollable content
-      const imgData = await toPng(element, {
-        cacheBust: true,
-        backgroundColor: '#ffffff',
-        pixelRatio: 2, // High resolution
-        width: element.scrollWidth,
-        height: element.scrollHeight,
-        style: {
-          height: 'auto',
-          overflow: 'visible',
-          maxHeight: 'none'
-        }
-      });
+      // Try to generate image, with fallback to lower resolution/different format if needed
+      let imgData: string | undefined;
+      let imgFormat: 'PNG' | 'JPEG' = 'PNG';
       
-      // Wait for a short moment to ensure image data is fully ready (fix for wrong PNG signature)
-      await new Promise(resolve => setTimeout(resolve, 100));
+      try {
+        // First attempt: High quality PNG
+        imgData = await toPng(element, {
+          cacheBust: true,
+          backgroundColor: '#ffffff',
+          pixelRatio: 2, // High resolution
+          width: element.scrollWidth,
+          height: element.scrollHeight,
+          style: {
+            height: 'auto',
+            overflow: 'visible',
+            maxHeight: 'none',
+            boxShadow: 'none', // Critical: remove box-shadow to prevent rendering artifacts
+            transform: 'none'  // Critical: remove potential transforms
+          }
+        });
+      } catch (e) {
+        console.warn('High quality PNG generation failed, retrying with JPEG...', e);
+      }
+
+      // Validate image data integrity using Image object
+      const validateAndLoadImage = (data: string | undefined): Promise<boolean> => {
+        return new Promise((resolve) => {
+          if (!data || data.length < 1000) {
+            resolve(false);
+            return;
+          }
+          const img = new Image();
+          img.onload = () => resolve(true);
+          img.onerror = () => resolve(false);
+          img.src = data;
+        });
+      };
+
+      if (!(await validateAndLoadImage(imgData))) {
+         // Second attempt: High quality JPEG
+         try {
+           console.log('Retrying with JPEG...');
+           imgData = await toJpeg(element, {
+              cacheBust: true,
+              backgroundColor: '#ffffff',
+              pixelRatio: 2, 
+              quality: 0.95,
+              width: element.scrollWidth,
+              height: element.scrollHeight,
+              style: {
+                height: 'auto',
+                overflow: 'visible',
+                maxHeight: 'none',
+                boxShadow: 'none',
+                transform: 'none'
+              }
+           });
+           imgFormat = 'JPEG';
+         } catch (e) {
+            console.warn('JPEG generation failed, retrying with low quality PNG...', e);
+         }
+      }
+
+      if (!(await validateAndLoadImage(imgData))) {
+         // Third attempt: Standard quality PNG (last resort)
+         console.log('Retrying with standard quality PNG...');
+         imgData = await toPng(element, {
+            cacheBust: true,
+            backgroundColor: '#ffffff',
+            pixelRatio: 1, // Standard resolution
+            width: element.scrollWidth,
+            height: element.scrollHeight,
+            style: {
+              height: 'auto',
+              overflow: 'visible',
+              maxHeight: 'none',
+              boxShadow: 'none',
+              transform: 'none'
+            }
+         });
+         imgFormat = 'PNG';
+      }
+
+      if (!(await validateAndLoadImage(imgData))) {
+        throw new Error('生成报告图片失败，请稍后重试');
+      }
+      
+      // Data is now guaranteed to be a valid loadable image
+      // Wait for a short moment to ensure everything is flushed
+      await new Promise(resolve => setTimeout(resolve, 300));
       
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -49,14 +123,16 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
       
       const margin = 10;
       const availableWidth = pdfWidth - (margin * 2);
-      const imgProps = pdf.getImageProperties(imgData);
+      
+      // Must use imgData! We validated it, but need to pass it to jsPDF
+      const imgProps = pdf.getImageProperties(imgData!);
       
       // Calculate scaled dimensions
       const pdfImgHeight = (imgProps.height * availableWidth) / imgProps.width;
       
       // If content fits on one page
       if (pdfImgHeight <= pdfHeight - (margin * 2)) {
-        pdf.addImage(imgData, 'PNG', margin, margin, availableWidth, pdfImgHeight);
+        pdf.addImage(imgData!, imgFormat, margin, margin, availableWidth, pdfImgHeight);
       } else {
         // Multi-page logic using Canvas slicing for better compatibility
         let heightLeft = pdfImgHeight;
@@ -79,8 +155,9 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
         canvas.height = pagePixelHeight;
 
         // Create an Image object from the data URL
+        // We know this works because we validated it above
         const srcImg = new Image();
-        srcImg.src = imgData;
+        srcImg.src = imgData!;
         await new Promise((resolve) => { srcImg.onload = resolve; });
 
         // Track exact pixel position in source image
@@ -157,13 +234,13 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
           // Draw the adjusted slice
           ctx.drawImage(srcImg, 0, currentSrcY, imgProps.width, currentSliceHeight, 0, 0, imgProps.width, currentSliceHeight);
           
-          const sliceData = canvas.toDataURL('image/png');
+          const sliceData = canvas.toDataURL(imgFormat === 'JPEG' ? 'image/jpeg' : 'image/png', imgFormat === 'JPEG' ? 0.95 : undefined);
           const slicePdfHeight = currentSliceHeight / scaleFactor;
           
           // Centering Logic
           const xOffset = (pdfWidth - availableWidth) / 2;
           
-          pdf.addImage(sliceData, 'PNG', xOffset, margin, availableWidth, slicePdfHeight);
+          pdf.addImage(sliceData, imgFormat, xOffset, margin, availableWidth, slicePdfHeight);
           
           // Advance counters
           heightLeft -= slicePdfHeight; // Approximate PDF height remaining
