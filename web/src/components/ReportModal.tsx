@@ -33,18 +33,88 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
       const imgWidth = canvas.width;
       const imgHeight = canvas.height;
       
-      // Calculate height based on width ratio to keep aspect ratio
-      const finalWidth = pdfWidth - 20; // 10mm margin each side
-      const finalHeight = (imgHeight * finalWidth) / imgWidth;
+      const margin = 10;
+      const availableWidth = pdfWidth - (margin * 2);
+      const imgProps = pdf.getImageProperties(imgData);
+      
+      // Calculate scaled dimensions
+      const pdfImgHeight = (imgProps.height * availableWidth) / imgProps.width;
+      
+      // If content height is less than one page
+      if (pdfImgHeight <= pdfHeight - (margin * 2)) {
+        pdf.addImage(imgData, 'PNG', margin, margin, availableWidth, pdfImgHeight);
+      } else {
+        // Multi-page logic
+        let heightLeft = pdfImgHeight;
+        let position = 0;
+        let page = 0;
 
-      pdf.addImage(imgData, 'PNG', 10, 10, finalWidth, finalHeight);
+        while (heightLeft > 0) {
+          if (page > 0) {
+            pdf.addPage();
+            position = 0; // Reset position for new page
+          }
+          
+          // Add image at current position (negative Y moves image up to show next section)
+          // We render the whole image but with a negative offset
+          // Note: This is a simple "slice" approach. 
+          // Ideally we would rerender specific parts, but html2canvas captures whole.
+          // jsPDF clipping is tricky, but adding image with negative Y works for simple cases
+          // However, standard addImage doesn't crop.
+          // Better approach for multi-page long image:
+          // Just place the image and let it overflow? No, jsPDF won't split it.
+          // We need to calculate how much to shift.
+          
+          // Actually, a safer robust way for long reports is to just let it fit width and 
+          // let the user handle printing if they want perfectly cut pages, 
+          // OR use a different approach.
+          // But for "download pdf error", often it's because the canvas is too big.
+          
+          // Let's try the simple fit-width first. 
+          // If it's failing, it might be the canvas size.
+          // Let's add try-catch around toDataURL too.
+          
+          // Reverting to simple single page scaling for now if it fits, 
+          // but if it's super long, we might need to split.
+          // Let's implement a basic splitting strategy:
+          
+          const pageHeight = pdfHeight - (margin * 2);
+          
+          // For the first page
+          if (page === 0) {
+            pdf.addImage(imgData, 'PNG', margin, margin, availableWidth, pdfImgHeight);
+            heightLeft -= pageHeight;
+          } else {
+            // This is tricky with just one big image. 
+            // A common workaround is adding the same image shifted up, 
+            // but masking is hard in jsPDF.
+            // Let's stick to single page but maybe Auto-Height PDF?
+            // jsPDF allows custom page size.
+          }
+           
+          // If we just want it to work without error, let's make the PDF page as tall as needed!
+          // This is the best "digital report" experience.
+          break; // Break loop, we will handle custom page size below
+        }
+      }
+      
+      // ALTERNATIVE: Create a PDF with custom height matching the content
+      if (pdfImgHeight > pdfHeight - (margin * 2)) {
+         const customPdf = new jsPDF('p', 'mm', [pdfWidth, pdfImgHeight + (margin * 2)]);
+         customPdf.addImage(imgData, 'PNG', margin, margin, availableWidth, pdfImgHeight);
+         customPdf.save(`质检报告_${input.metadata.ticket_id || '未命名'}.pdf`);
+         return;
+      }
+
       pdf.save(`质检报告_${input.metadata.ticket_id || '未命名'}.pdf`);
     } catch (error) {
       console.error('PDF Generation failed:', error);
-      alert('生成 PDF 失败，请重试');
+      // Detailed error message
+      alert(`生成 PDF 失败: ${error instanceof Error ? error.message : '未知错误'}`);
     } finally {
       setIsGenerating(false);
     }
@@ -110,9 +180,35 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
               </div>
             </div>
 
+            {/* Work Order Details (New Section) */}
+            <div className="mb-8">
+              <h3 className="font-bold text-lg border-l-4 border-blue-600 pl-3 mb-4">一、工单详情</h3>
+              <div className="space-y-4">
+                <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
+                  <h4 className="text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                    群众诉求
+                  </h4>
+                  <div className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap font-sans">
+                    {input.appeal_text || '暂无内容'}
+                  </div>
+                </div>
+                
+                <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
+                  <h4 className="text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
+                     <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                     办理答复
+                  </h4>
+                   <div className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap font-sans">
+                    {input.reply_text || '暂无内容'}
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Score Summary */}
             <div className="mb-8">
-              <h3 className="font-bold text-lg border-l-4 border-blue-600 pl-3 mb-4">一、综合评价</h3>
+              <h3 className="font-bold text-lg border-l-4 border-blue-600 pl-3 mb-4">二、综合评价</h3>
               <div className="flex items-center gap-6 bg-slate-50 p-6 rounded-lg border border-slate-100">
                 <div className="text-center px-6 border-r border-slate-200">
                   <div className="text-xs text-slate-500 mb-1">总分</div>
@@ -150,7 +246,7 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
 
             {/* Dimension Details */}
             <div className="mb-8">
-              <h3 className="font-bold text-lg border-l-4 border-blue-600 pl-3 mb-4">二、分项指标详情</h3>
+              <h3 className="font-bold text-lg border-l-4 border-blue-600 pl-3 mb-4">三、分项指标详情</h3>
               <table className="w-full text-sm text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-100 text-slate-600">
@@ -185,7 +281,7 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
             {/* Critical Reasons (Forced Review Reasons) */}
             {result.is_critical && result.critical_reasons && result.critical_reasons.length > 0 && (
               <div className="mb-8">
-                <h3 className="font-bold text-lg border-l-4 border-red-600 pl-3 mb-4">三、强制复核原因</h3>
+                <h3 className="font-bold text-lg border-l-4 border-red-600 pl-3 mb-4">四、强制复核原因</h3>
                 <div className="bg-red-50 p-4 rounded border border-red-100">
                   <ul className="list-disc pl-5 space-y-2">
                     {result.critical_reasons.map((reason, idx) => (
@@ -201,7 +297,7 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
             {/* Risk Warnings */}
             {(result.typo_check.typos.length > 0 || result.sensitive_word_check.has_sensitive_word) && (
               <div className="mb-8">
-                <h3 className="font-bold text-lg border-l-4 border-orange-500 pl-3 mb-4">四、风险提示</h3>
+                <h3 className="font-bold text-lg border-l-4 border-orange-500 pl-3 mb-4">五、风险提示</h3>
                 <div className="space-y-3">
                   {result.typo_check.typos.length > 0 && (
                     <div className="bg-orange-50 p-4 rounded border border-orange-100">
@@ -237,7 +333,7 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
 
             {/* Suggestion */}
             <div className="mb-8">
-              <h3 className="font-bold text-lg border-l-4 border-blue-600 pl-3 mb-4">五、改进建议</h3>
+              <h3 className="font-bold text-lg border-l-4 border-blue-600 pl-3 mb-4">六、改进建议</h3>
               <div className="bg-blue-50 p-4 rounded border border-blue-100 text-sm text-slate-700 leading-relaxed mb-4">
                 <h4 className="font-bold text-blue-800 mb-2">综合建议：</h4>
                 {result.suggestion}

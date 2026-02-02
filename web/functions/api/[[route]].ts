@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { handle } from 'hono/cloudflare-pages';
 import OpenAI from 'openai';
+import { REPLY_GUIDELINES } from '../utils/reply_templates';
 
 const app = new Hono().basePath('/api');
 
@@ -41,6 +42,8 @@ You are an expert Government Work Order Quality Inspector. Your task is to evalu
 - Reply Content: "${reply_text}"
 - Metadata: ${JSON.stringify(metadata)}
 
+${REPLY_GUIDELINES}
+
 **Evaluation Criteria (Total 100 points):**
 1. **Relevance (30%)**: Does the reply directly address the core issue? Is it evasive?
 2. **Logic (30%)**: Is the reply logically sound, coherent, and factually consistent?
@@ -76,7 +79,11 @@ Return a JSON object strictly adhering to this structure:
 }
 
 Ensure the "reasoning_trace" provides a step-by-step analysis in Chinese.
-Ensure "suggested_reply" is a high-quality, rewritten reply if the original is poor.
+**Critical Instruction for "suggested_reply":**
+1. Identify the specific category of the work order (e.g., Consultation, Appeal, Complaint, etc.).
+2. Select the corresponding template from the **Reply Generation Guidelines** provided above.
+3. Generate a high-quality, polite, and effective reply that strictly follows the template structure and addresses the citizen's specific appeal.
+4. If the original reply is already excellent, you can set "suggested_reply" to null or an empty string, or provide a slightly polished version.
 `;
 
     const completion = await openai.chat.completions.create({
