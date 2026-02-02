@@ -2,6 +2,8 @@ import { useRef, useState } from 'react';
 import { X, Download, FileText, CheckCircle, AlertTriangle, UserCheck } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import jsPDF from 'jspdf';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { EvaluationResult, WorkOrderInput } from '../types/quality_inspection';
 
 interface ReportModalProps {
@@ -48,64 +50,25 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
       } else {
         // Multi-page logic
         let heightLeft = pdfImgHeight;
-        let page = 0;
+        let position = 0;
+        const pageHeight = pdfHeight - (margin * 2);
 
         while (heightLeft > 0) {
-          if (page > 0) {
+          if (position > 0) {
             pdf.addPage();
           }
           
-          // Add image at current position (negative Y moves image up to show next section)
-          // We render the whole image but with a negative offset
-          // Note: This is a simple "slice" approach. 
-          // Ideally we would rerender specific parts, but html2canvas captures whole.
-          // jsPDF clipping is tricky, but adding image with negative Y works for simple cases
-          // However, standard addImage doesn't crop.
-          // Better approach for multi-page long image:
-          // Just place the image and let it overflow? No, jsPDF won't split it.
-          // We need to calculate how much to shift.
+          // Calculate the Y offset to show the correct slice of the image
+          // We move the image UP (negative Y) to reveal the next section
+          const yOffset = margin - (position * pageHeight);
           
-          // Actually, a safer robust way for long reports is to just let it fit width and 
-          // let the user handle printing if they want perfectly cut pages, 
-          // OR use a different approach.
-          // But for "download pdf error", often it's because the canvas is too big.
+          pdf.addImage(imgData, 'PNG', margin, yOffset, availableWidth, pdfImgHeight);
           
-          // Let's try the simple fit-width first. 
-          // If it's failing, it might be the canvas size.
-          // Let's add try-catch around toDataURL too.
-          
-          // Reverting to simple single page scaling for now if it fits, 
-          // but if it's super long, we might need to split.
-          // Let's implement a basic splitting strategy:
-          
-          const pageHeight = pdfHeight - (margin * 2);
-          
-          // For the first page
-          if (page === 0) {
-            pdf.addImage(imgData, 'PNG', margin, margin, availableWidth, pdfImgHeight);
-            heightLeft -= pageHeight;
-          } else {
-            // This is tricky with just one big image. 
-            // A common workaround is adding the same image shifted up, 
-            // but masking is hard in jsPDF.
-            // Let's stick to single page but maybe Auto-Height PDF?
-            // jsPDF allows custom page size.
-          }
-           
-          // If we just want it to work without error, let's make the PDF page as tall as needed!
-          // This is the best "digital report" experience.
-          break; // Break loop, we will handle custom page size below
+          heightLeft -= pageHeight;
+          position++;
         }
       }
       
-      // ALTERNATIVE: Create a PDF with custom height matching the content
-      if (pdfImgHeight > pdfHeight - (margin * 2)) {
-         const customPdf = new jsPDF('p', 'mm', [pdfWidth, pdfImgHeight + (margin * 2)]);
-         customPdf.addImage(imgData, 'PNG', margin, margin, availableWidth, pdfImgHeight);
-         customPdf.save(`质检报告_${input.metadata.ticket_id || '未命名'}.pdf`);
-         return;
-      }
-
       pdf.save(`质检报告_${input.metadata.ticket_id || '未命名'}.pdf`);
     } catch (error) {
       console.error('PDF Generation failed:', error);
@@ -122,6 +85,9 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
     if (level === '存在风险') return 'text-orange-600 bg-orange-50 border-orange-200';
     return 'text-red-600 bg-red-50 border-red-200';
   };
+
+  // Convert single newlines to hard breaks for Markdown rendering in report
+  const markdownContent = result.suggested_reply ? result.suggested_reply.replace(/\n/g, '  \n') : '';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
@@ -338,8 +304,13 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
               {result.suggested_reply && (
                 <div className="bg-green-50 p-4 rounded border border-green-100 text-sm text-slate-700 leading-relaxed">
                   <h4 className="font-bold text-green-800 mb-2">AI 优化回复参考：</h4>
-                  <div className="whitespace-pre-wrap font-mono text-xs bg-white p-3 rounded border border-green-200 text-slate-600">
-                    {result.suggested_reply}
+                  <div className="bg-white p-3 rounded border border-green-200 text-slate-600">
+                    <ReactMarkdown 
+                      remarkPlugins={[remarkGfm]} 
+                      className="prose prose-sm max-w-none prose-p:my-1 prose-headings:my-2 prose-strong:text-green-800 prose-li:my-0"
+                    >
+                      {markdownContent}
+                    </ReactMarkdown>
                   </div>
                 </div>
               )}
