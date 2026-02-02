@@ -81,7 +81,7 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
             cacheBust: true,
             backgroundColor: '#ffffff',
             pixelRatio: 1, 
-            width: element.scrollWidth,
+            width: element.offsetWidth, // Use offsetWidth here too
             height: element.scrollHeight,
             style: {
               height: 'auto',
