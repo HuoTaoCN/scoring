@@ -213,11 +213,11 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
         </div>
 
         {/* Content Area (Scrollable) */}
-        <div className="flex-1 overflow-y-auto p-6 flex justify-center bg-gray-100">
+        <div className="flex-1 overflow-y-auto p-6 flex justify-center items-start bg-gray-100">
           {/* A4 Paper Look */}
           <div 
             ref={reportRef}
-            className="bg-white shadow-lg w-[210mm] min-h-[297mm] p-[15mm] text-slate-800 relative flex flex-col mx-auto"
+            className="bg-white shadow-lg w-[210mm] min-h-[297mm] p-[15mm] text-slate-800 relative flex flex-col mx-auto shrink-0"
           >
             {/* Report Header */}
             <div className="text-center border-b-2 border-slate-800 pb-4 mb-6">
