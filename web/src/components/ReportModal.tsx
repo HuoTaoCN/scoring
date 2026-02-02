@@ -158,7 +158,7 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
           const slicePdfHeight = currentSliceHeight / scaleFactor;
           
           // Centering Logic
-          const xOffset = margin + (availableWidth - (imgProps.width / scaleFactor)) / 2;
+          const xOffset = (pdfWidth - availableWidth) / 2;
           
           pdf.addImage(sliceData, 'PNG', xOffset, margin, availableWidth, slicePdfHeight);
           
