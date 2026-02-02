@@ -78,6 +78,9 @@ export function ReadmeModal({ isOpen, onClose }: ReadmeModalProps) {
             [&_div[align='center']_img]:mx-1 
             [&_div[align='center']_img]:my-0
             [&_div[align='center']_p]:my-2
+            
+            /* Add emoji font support */
+            font-sans
           ">
             <ReactMarkdown 
               remarkPlugins={[remarkGfm]}
