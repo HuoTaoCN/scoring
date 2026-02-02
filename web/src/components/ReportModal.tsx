@@ -130,9 +130,8 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       
-      // Remove margin to ensure full A4 coverage (DOM already has padding)
-      const margin = 0;
-      const availableWidth = pdfWidth;
+      const margin = 10;
+      const availableWidth = pdfWidth - (margin * 2);
       
       // Must use imgData! We validated it, but need to pass it to jsPDF
       const imgProps = pdf.getImageProperties(imgData);
@@ -141,13 +140,13 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
       const pdfImgHeight = (imgProps.height * availableWidth) / imgProps.width;
       
       // If content fits on one page
-      if (pdfImgHeight <= pdfHeight) {
-        pdf.addImage(imgData, imgFormat, 0, 0, availableWidth, pdfImgHeight);
+      if (pdfImgHeight <= pdfHeight - (margin * 2)) {
+        pdf.addImage(imgData, imgFormat, margin, margin, availableWidth, pdfImgHeight);
       } else {
         // Multi-page logic using Canvas slicing for better compatibility
         let heightLeft = pdfImgHeight;
         let position = 0;
-        const pageContentHeight = pdfHeight;
+        const pageContentHeight = pdfHeight - (margin * 2);
         
         // Create a temporary canvas for slicing
         const canvas = document.createElement('canvas');
@@ -248,9 +247,9 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
           const slicePdfHeight = currentSliceHeight / scaleFactor;
           
           // Centering Logic
-          const xOffset = (pdfWidth - availableWidth) / 2;
+          const xOffset = 0;
           
-          pdf.addImage(sliceData, imgFormat, xOffset, margin, availableWidth, slicePdfHeight);
+          pdf.addImage(sliceData, imgFormat, xOffset, 0, availableWidth, slicePdfHeight);
           
           // Advance counters
           heightLeft -= slicePdfHeight; // Approximate PDF height remaining
