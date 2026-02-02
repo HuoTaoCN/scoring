@@ -42,7 +42,8 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
             overflow: 'visible',
             maxHeight: 'none',
             boxShadow: 'none', 
-            transform: 'none'  
+            transform: 'none',
+            margin: '0' // Force margin to 0 to prevent capturing centering margins
           }
         });
       } catch (e) {
@@ -87,7 +88,8 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
               overflow: 'visible',
               maxHeight: 'none',
               boxShadow: 'none',
-              transform: 'none'
+              transform: 'none',
+              margin: '0'
             }
          });
       }
@@ -128,8 +130,9 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       
-      const margin = 10;
-      const availableWidth = pdfWidth - (margin * 2);
+      // Remove margin to ensure full A4 coverage (DOM already has padding)
+      const margin = 0;
+      const availableWidth = pdfWidth;
       
       // Must use imgData! We validated it, but need to pass it to jsPDF
       const imgProps = pdf.getImageProperties(imgData);
@@ -138,13 +141,13 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
       const pdfImgHeight = (imgProps.height * availableWidth) / imgProps.width;
       
       // If content fits on one page
-      if (pdfImgHeight <= pdfHeight - (margin * 2)) {
-        pdf.addImage(imgData, imgFormat, margin, margin, availableWidth, pdfImgHeight);
+      if (pdfImgHeight <= pdfHeight) {
+        pdf.addImage(imgData, imgFormat, 0, 0, availableWidth, pdfImgHeight);
       } else {
         // Multi-page logic using Canvas slicing for better compatibility
         let heightLeft = pdfImgHeight;
         let position = 0;
-        const pageContentHeight = pdfHeight - (margin * 2);
+        const pageContentHeight = pdfHeight;
         
         // Create a temporary canvas for slicing
         const canvas = document.createElement('canvas');
