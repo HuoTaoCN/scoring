@@ -51,27 +51,61 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
       // Calculate scaled dimensions
       const pdfImgHeight = (imgProps.height * availableWidth) / imgProps.width;
       
-      // Multi-page logic
-      let heightLeft = pdfImgHeight;
-      let position = 0;
-      // Available height for content on each page
-      const pageContentHeight = pdfHeight - (margin * 2);
+      // If content fits on one page
+      if (pdfImgHeight <= pdfHeight - (margin * 2)) {
+        pdf.addImage(imgData, 'PNG', margin, margin, availableWidth, pdfImgHeight);
+      } else {
+        // Multi-page logic using Canvas slicing for better compatibility
+        let heightLeft = pdfImgHeight;
+        let position = 0;
+        const pageContentHeight = pdfHeight - (margin * 2);
+        
+        // Create a temporary canvas for slicing
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) throw new Error('Could not create canvas context');
+        
+        // Calculate the scale factor between PDF points and Image pixels
+        // pdfImgHeight is in PDF units (mm), imgProps.height is in pixels
+        const scaleFactor = imgProps.width / availableWidth;
+        
+        // Set canvas width to full image width
+        canvas.width = imgProps.width;
+        // Set canvas height to one page worth of pixels
+        canvas.height = pageContentHeight * scaleFactor;
 
-      while (heightLeft > 0) {
-        if (position > 0) {
-          pdf.addPage();
+        // Create an Image object from the data URL
+        const srcImg = new Image();
+        srcImg.src = imgData;
+        await new Promise((resolve) => { srcImg.onload = resolve; });
+
+        while (heightLeft > 0) {
+          if (position > 0) {
+            pdf.addPage();
+          }
+          
+          // Clear canvas
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          
+          // Source Y position in pixels
+          const srcY = position * pageContentHeight * scaleFactor;
+          // Source height to copy (might be less for the last page)
+          const srcH = Math.min(canvas.height, imgProps.height - srcY);
+          
+          // Draw the slice
+          ctx.drawImage(srcImg, 0, srcY, imgProps.width, srcH, 0, 0, imgProps.width, srcH);
+          
+          // Convert slice to data URL
+          const sliceData = canvas.toDataURL('image/png');
+          
+          // Calculate height of this slice in PDF units
+          const slicePdfHeight = srcH / scaleFactor;
+          
+          pdf.addImage(sliceData, 'PNG', margin, margin, availableWidth, slicePdfHeight);
+          
+          heightLeft -= pageContentHeight;
+          position++;
         }
-        
-        // Calculate the Y offset for the source image
-        // For the first page, we start at 0
-        // For subsequent pages, we need to show the next slice of the image
-        // We achieve this by placing the image higher up (negative Y) 
-        const yPos = margin - (position * pageContentHeight);
-        
-        pdf.addImage(imgData, 'PNG', margin, yPos, availableWidth, pdfImgHeight);
-        
-        heightLeft -= pageContentHeight;
-        position++;
       }
       
       pdf.save(`质检报告_${input.metadata.ticket_id || '未命名'}.pdf`);
