@@ -42,6 +42,10 @@ You are an expert Government Work Order Quality Inspector. Your task is to evalu
 - Reply Content: "${reply_text}"
 - Metadata: ${JSON.stringify(metadata)}
 
+**IMPORTANT CONTEXT:**
+- Current City: Chongqing (重庆市). If no specific city is mentioned in the appeal, assume it is Chongqing. Do NOT use "Shenzhen" (深圳市) or other cities unless explicitly stated in the input.
+- Current Date: ${new Date().toLocaleDateString('zh-CN')}. Use the ticket's timestamp for past events, and this date for the reply signature if not specified.
+
 ${REPLY_GUIDELINES}
 
 **Evaluation Criteria (Total 100 points):**
