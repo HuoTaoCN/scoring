@@ -34,8 +34,6 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
       
       const margin = 10;
       const availableWidth = pdfWidth - (margin * 2);
@@ -50,13 +48,11 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
       } else {
         // Multi-page logic
         let heightLeft = pdfImgHeight;
-        let position = 0;
         let page = 0;
 
         while (heightLeft > 0) {
           if (page > 0) {
             pdf.addPage();
-            position = 0; // Reset position for new page
           }
           
           // Add image at current position (negative Y moves image up to show next section)
