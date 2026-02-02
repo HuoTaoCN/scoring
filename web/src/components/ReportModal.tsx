@@ -27,12 +27,11 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
       const element = reportRef.current;
       
       // Try to generate image, with fallback to lower resolution/different format if needed
-      let imgData: string | undefined;
-      let imgFormat: 'PNG' | 'JPEG' = 'PNG';
+      let rawImgData: string | undefined;
       
       try {
         // First attempt: High quality PNG
-        imgData = await toPng(element, {
+        rawImgData = await toPng(element, {
           cacheBust: true,
           backgroundColor: '#ffffff',
           pixelRatio: 2, // High resolution
@@ -42,33 +41,19 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
             height: 'auto',
             overflow: 'visible',
             maxHeight: 'none',
-            boxShadow: 'none', // Critical: remove box-shadow to prevent rendering artifacts
-            transform: 'none'  // Critical: remove potential transforms
+            boxShadow: 'none', 
+            transform: 'none'  
           }
         });
       } catch (e) {
         console.warn('High quality PNG generation failed, retrying with JPEG...', e);
       }
 
-      // Validate image data integrity using Image object
-      const validateAndLoadImage = (data: string | undefined): Promise<boolean> => {
-        return new Promise((resolve) => {
-          if (!data || data.length < 1000) {
-            resolve(false);
-            return;
-          }
-          const img = new Image();
-          img.onload = () => resolve(true);
-          img.onerror = () => resolve(false);
-          img.src = data;
-        });
-      };
-
-      if (!(await validateAndLoadImage(imgData))) {
-         // Second attempt: High quality JPEG
+      // If PNG failed, try JPEG
+      if (!rawImgData || rawImgData.length < 1000) {
          try {
            console.log('Retrying with JPEG...');
-           imgData = await toJpeg(element, {
+           rawImgData = await toJpeg(element, {
               cacheBust: true,
               backgroundColor: '#ffffff',
               pixelRatio: 2, 
@@ -83,19 +68,18 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
                 transform: 'none'
               }
            });
-           imgFormat = 'JPEG';
          } catch (e) {
             console.warn('JPEG generation failed, retrying with low quality PNG...', e);
          }
       }
 
-      if (!(await validateAndLoadImage(imgData))) {
-         // Third attempt: Standard quality PNG (last resort)
+      // If JPEG failed, try Low Quality PNG
+      if (!rawImgData || rawImgData.length < 1000) {
          console.log('Retrying with standard quality PNG...');
-         imgData = await toPng(element, {
+         rawImgData = await toPng(element, {
             cacheBust: true,
             backgroundColor: '#ffffff',
-            pixelRatio: 1, // Standard resolution
+            pixelRatio: 1, 
             width: element.scrollWidth,
             height: element.scrollHeight,
             style: {
@@ -106,17 +90,40 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
               transform: 'none'
             }
          });
-         imgFormat = 'PNG';
       }
 
-      if (!(await validateAndLoadImage(imgData))) {
+      if (!rawImgData || rawImgData.length < 1000) {
         throw new Error('生成报告图片失败，请稍后重试');
       }
       
-      // Data is now guaranteed to be a valid loadable image
-      // Wait for a short moment to ensure everything is flushed
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
+      // CLEANING STEP: Force convert everything to a clean JPEG via Canvas
+      // This solves 'wrong PNG signature' errors by guaranteeing the data passed to jsPDF is standard
+      const cleanImgData = await new Promise<string>((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Canvas context failed'));
+            return;
+          }
+          // Fill white background just in case
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0);
+          // Export as high quality JPEG
+          resolve(canvas.toDataURL('image/jpeg', 0.98));
+        };
+        img.onerror = () => reject(new Error('Image load failed'));
+        img.src = rawImgData!;
+      });
+
+      // Now we have a guaranteed valid JPEG
+      const imgData = cleanImgData;
+      const imgFormat = 'JPEG';
+
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
@@ -125,14 +132,14 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
       const availableWidth = pdfWidth - (margin * 2);
       
       // Must use imgData! We validated it, but need to pass it to jsPDF
-      const imgProps = pdf.getImageProperties(imgData!);
+      const imgProps = pdf.getImageProperties(imgData);
       
       // Calculate scaled dimensions
       const pdfImgHeight = (imgProps.height * availableWidth) / imgProps.width;
       
       // If content fits on one page
       if (pdfImgHeight <= pdfHeight - (margin * 2)) {
-        pdf.addImage(imgData!, imgFormat, margin, margin, availableWidth, pdfImgHeight);
+        pdf.addImage(imgData, imgFormat, margin, margin, availableWidth, pdfImgHeight);
       } else {
         // Multi-page logic using Canvas slicing for better compatibility
         let heightLeft = pdfImgHeight;
@@ -157,7 +164,7 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
         // Create an Image object from the data URL
         // We know this works because we validated it above
         const srcImg = new Image();
-        srcImg.src = imgData!;
+        srcImg.src = imgData;
         await new Promise((resolve) => { srcImg.onload = resolve; });
 
         // Track exact pixel position in source image
@@ -234,7 +241,7 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
           // Draw the adjusted slice
           ctx.drawImage(srcImg, 0, currentSrcY, imgProps.width, currentSliceHeight, 0, 0, imgProps.width, currentSliceHeight);
           
-          const sliceData = canvas.toDataURL(imgFormat === 'JPEG' ? 'image/jpeg' : 'image/png', imgFormat === 'JPEG' ? 0.95 : undefined);
+          const sliceData = canvas.toDataURL('image/jpeg', 0.95);
           const slicePdfHeight = currentSliceHeight / scaleFactor;
           
           // Centering Logic
