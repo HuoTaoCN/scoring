@@ -51,47 +51,18 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
       // Calculate scaled dimensions
       const pdfImgHeight = (imgProps.height * availableWidth) / imgProps.width;
       
-      // If content height is less than one page
-      if (pdfImgHeight <= pdfHeight - (margin * 2)) {
-        pdf.addImage(imgData, 'PNG', margin, margin, availableWidth, pdfImgHeight);
+      // Use a single long page if content exceeds A4 height
+      // This avoids pagination issues (splitting text/images in half) and provides a better digital reading experience
+      if (pdfImgHeight > pdfHeight - (margin * 2)) {
+        // Create a new PDF with custom height
+        const longPdf = new jsPDF('p', 'mm', [pdfWidth, pdfImgHeight + (margin * 2)]);
+        longPdf.addImage(imgData, 'PNG', margin, margin, availableWidth, pdfImgHeight);
+        longPdf.save(`质检报告_${input.metadata.ticket_id || '未命名'}.pdf`);
       } else {
-        // Multi-page logic
-        let heightLeft = pdfImgHeight;
-        let position = 0;
-        // Available height for content on each page
-        const pageContentHeight = pdfHeight - (margin * 2);
-
-        while (heightLeft > 0) {
-          if (position > 0) {
-            pdf.addPage();
-          }
-          
-          // Calculate the Y offset for the source image
-          // For the first page, we start at 0
-          // For subsequent pages, we need to show the next slice of the image
-          // We achieve this by placing the image higher up (negative Y) 
-          // but relying on PDF page clipping/masking is tricky.
-          // jsPDF addImage doesn't support source clipping (sx, sy, sw, sh) directly like canvas context.
-          
-          // However, we can use a workaround:
-          // We calculate the Y position on the PDF page.
-          // For page 0: Y = margin
-          // For page 1: Y = margin - pageContentHeight
-          // This effectively "slides" the image up so the next part shows in the visible area.
-          const yPos = margin - (position * pageContentHeight);
-          
-          // We must ensure we don't print outside the page boundaries if we want cleaner output,
-          // but jsPDF defaults usually handle overflow by just not showing it or showing it off-canvas.
-          // The issue "only one page pdf" usually means the loop broke early or addPage wasn't called.
-          
-          pdf.addImage(imgData, 'PNG', margin, yPos, availableWidth, pdfImgHeight);
-          
-          heightLeft -= pageContentHeight;
-          position++;
-        }
+        // Standard A4 page
+        pdf.addImage(imgData, 'PNG', margin, margin, availableWidth, pdfImgHeight);
+        pdf.save(`质检报告_${input.metadata.ticket_id || '未命名'}.pdf`);
       }
-      
-      pdf.save(`质检报告_${input.metadata.ticket_id || '未命名'}.pdf`);
     } catch (error) {
       console.error('PDF Generation failed:', error);
       // Detailed error message
@@ -136,7 +107,7 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
           {/* A4 Paper Look */}
           <div 
             ref={reportRef}
-            className="bg-white shadow-lg w-[210mm] min-h-[297mm] p-[15mm] text-slate-800 relative flex flex-col"
+            className="bg-white shadow-lg w-[210mm] p-[15mm] text-slate-800 relative flex flex-col"
           >
             {/* Report Header */}
             <div className="text-center border-b-2 border-slate-800 pb-4 mb-6">
