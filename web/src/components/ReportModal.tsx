@@ -58,20 +58,35 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
         // Multi-page logic
         let heightLeft = pdfImgHeight;
         let position = 0;
-        const pageHeight = pdfHeight - (margin * 2);
+        // Available height for content on each page
+        const pageContentHeight = pdfHeight - (margin * 2);
 
         while (heightLeft > 0) {
           if (position > 0) {
             pdf.addPage();
           }
           
-          // Calculate the Y offset to show the correct slice of the image
-          // We move the image UP (negative Y) to reveal the next section
-          const yOffset = margin - (position * pageHeight);
+          // Calculate the Y offset for the source image
+          // For the first page, we start at 0
+          // For subsequent pages, we need to show the next slice of the image
+          // We achieve this by placing the image higher up (negative Y) 
+          // but relying on PDF page clipping/masking is tricky.
+          // jsPDF addImage doesn't support source clipping (sx, sy, sw, sh) directly like canvas context.
           
-          pdf.addImage(imgData, 'PNG', margin, yOffset, availableWidth, pdfImgHeight);
+          // However, we can use a workaround:
+          // We calculate the Y position on the PDF page.
+          // For page 0: Y = margin
+          // For page 1: Y = margin - pageContentHeight
+          // This effectively "slides" the image up so the next part shows in the visible area.
+          const yPos = margin - (position * pageContentHeight);
           
-          heightLeft -= pageHeight;
+          // We must ensure we don't print outside the page boundaries if we want cleaner output,
+          // but jsPDF defaults usually handle overflow by just not showing it or showing it off-canvas.
+          // The issue "only one page pdf" usually means the loop broke early or addPage wasn't called.
+          
+          pdf.addImage(imgData, 'PNG', margin, yPos, availableWidth, pdfImgHeight);
+          
+          heightLeft -= pageContentHeight;
           position++;
         }
       }
@@ -303,7 +318,7 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
             {/* Suggestion */}
             <div className="mb-8">
               <h3 className="font-bold text-lg border-l-4 border-blue-600 pl-3 mb-4">六、改进建议</h3>
-              <div className="bg-blue-50 p-4 rounded border border-blue-100 text-sm text-slate-700 leading-relaxed mb-4">
+              <div className="bg-blue-50 p-4 rounded border border-blue-100 text-sm text-slate-700 leading-relaxed whitespace-pre-wrap mb-4">
                 <h4 className="font-bold text-blue-800 mb-2">综合建议：</h4>
                 {result.suggestion}
               </div>
