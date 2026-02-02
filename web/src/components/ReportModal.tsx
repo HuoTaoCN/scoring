@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { X, Download, FileText, CheckCircle, AlertTriangle, UserCheck } from 'lucide-react';
-import html2canvas from 'html2canvas';
+import { toPng } from 'html-to-image';
 import jsPDF from 'jspdf';
 import { EvaluationResult, WorkOrderInput } from '../types/quality_inspection';
 
@@ -23,14 +23,14 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
     setIsGenerating(true);
     try {
       const element = reportRef.current;
-      const canvas = await html2canvas(element, {
-        scale: 2, // Improve quality
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff'
+      
+      // Use html-to-image instead of html2canvas for better compatibility with modern CSS (like oklch colors in Tailwind v4)
+      const imgData = await toPng(element, {
+        cacheBust: true,
+        backgroundColor: '#ffffff',
+        pixelRatio: 2 // High resolution
       });
       
-      const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
