@@ -26,11 +26,18 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
     try {
       const element = reportRef.current;
       
-      // Use html-to-image instead of html2canvas for better compatibility with modern CSS (like oklch colors in Tailwind v4)
+      // Use html-to-image with explicit dimensions to ensure full capture of scrollable content
       const imgData = await toPng(element, {
         cacheBust: true,
         backgroundColor: '#ffffff',
-        pixelRatio: 2 // High resolution
+        pixelRatio: 2, // High resolution
+        width: element.scrollWidth,
+        height: element.scrollHeight,
+        style: {
+          height: 'auto',
+          overflow: 'visible',
+          maxHeight: 'none'
+        }
       });
       
       const pdf = new jsPDF('p', 'mm', 'a4');
@@ -304,10 +311,14 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
               {result.suggested_reply && (
                 <div className="bg-green-50 p-4 rounded border border-green-100 text-sm text-slate-700 leading-relaxed">
                   <h4 className="font-bold text-green-800 mb-2">AI 优化回复参考：</h4>
-                  <div className="bg-white p-3 rounded border border-green-200 text-slate-600">
+                  <div className="text-slate-700">
                     <ReactMarkdown 
                       remarkPlugins={[remarkGfm]} 
-                      className="prose prose-sm max-w-none prose-p:my-1 prose-headings:my-2 prose-strong:text-green-800 prose-li:my-0"
+                      className="prose prose-sm max-w-none prose-p:my-1 prose-headings:my-2 prose-strong:text-green-800 prose-strong:font-bold prose-li:my-0"
+                      components={{
+                        // Override strong to ensure it's bold and colored
+                        strong: ({node, ...props}) => <strong className="font-bold text-green-800" {...props} />
+                      }}
                     >
                       {markdownContent}
                     </ReactMarkdown>
