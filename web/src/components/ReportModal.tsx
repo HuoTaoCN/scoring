@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { X, Download, FileText, CheckCircle, AlertTriangle, UserCheck } from 'lucide-react';
-import { toPng } from 'html-to-image';
+import { toPng, toJpeg } from 'html-to-image';
 import jsPDF from 'jspdf';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
