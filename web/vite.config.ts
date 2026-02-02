@@ -13,5 +13,19 @@ export default defineConfig({
     port: 5173,
     host: true,
     strictPort: true,
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor': ['react', 'react-dom'],
+          'charts': ['mermaid'],
+          'pdf': ['jspdf', 'html-to-image'],
+          'markdown': ['react-markdown', 'remark-gfm', 'rehype-raw'],
+          'utils': ['openai', 'hono', 'clsx', 'tailwind-merge', 'lucide-react']
+        }
+      }
+    },
+    chunkSizeWarningLimit: 1000
   }
 })
