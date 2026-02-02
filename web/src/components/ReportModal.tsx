@@ -35,7 +35,7 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
           cacheBust: true,
           backgroundColor: '#ffffff',
           pixelRatio: 2, // High resolution
-          width: element.scrollWidth,
+          width: element.offsetWidth, // STRICTLY use offsetWidth to match visual A4 width, ignoring scroll overflow
           height: element.scrollHeight,
           style: {
             height: 'auto',
@@ -227,10 +227,22 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
           }
 
           // Ensure we don't go past end of image
-          currentSliceHeight = Math.min(currentSliceHeight, imgProps.height - currentSrcY);
+          // Ensure calculations result in valid numbers
+          const remainingHeight = imgProps.height - currentSrcY;
+          currentSliceHeight = Math.min(currentSliceHeight, remainingHeight);
           
+          // Force integer height to avoid sub-pixel rendering issues
+          currentSliceHeight = Math.floor(currentSliceHeight);
+
           // Safety check: if slice became too small (e.g. huge image with no whitespace), revert to full page
-          if (currentSliceHeight < 100) currentSliceHeight = Math.min(pagePixelHeight, imgProps.height - currentSrcY);
+          // Also check for 0 or negative height which breaks canvas
+          if (currentSliceHeight < 100 && remainingHeight >= 100) {
+             currentSliceHeight = Math.min(pagePixelHeight, remainingHeight);
+             currentSliceHeight = Math.floor(currentSliceHeight);
+          }
+          
+          // Final hard stop if we ran out of pixels
+          if (currentSliceHeight <= 0) break;
 
           // Resize canvas to fit exactly this slice
           canvas.height = currentSliceHeight;
@@ -244,17 +256,38 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
           ctx.drawImage(srcImg, 0, currentSrcY, imgProps.width, currentSliceHeight, 0, 0, imgProps.width, currentSliceHeight);
           
           const sliceData = canvas.toDataURL('image/jpeg', 0.95);
-          const slicePdfHeight = currentSliceHeight / scaleFactor;
+          
+          // Calculate PDF height for this slice safely
+          let slicePdfHeight = currentSliceHeight / scaleFactor;
+          
+          // STRICT VALIDATION: Ensure all params passed to addImage are finite and valid
+          if (!isFinite(slicePdfHeight) || slicePdfHeight <= 0.01) {
+             console.warn("Invalid slice height calculated, falling back to safe minimum", slicePdfHeight);
+             slicePdfHeight = 0.1; // Minimal valid height
+          }
+          if (!isFinite(availableWidth) || availableWidth <= 0) {
+             throw new Error("Invalid PDF width detected");
+          }
           
           // Centering Logic
           const xOffset = 0;
           
-          pdf.addImage(sliceData, imgFormat, xOffset, 0, availableWidth, slicePdfHeight);
+          try {
+            pdf.addImage(sliceData, imgFormat, xOffset, 0, availableWidth, slicePdfHeight);
+          } catch (e) {
+            console.error("Critical error adding page slice to PDF:", e);
+            // Don't crash the whole process, try to continue to next page? 
+            // Or break to save at least what we have
+            break; 
+          }
           
           // Advance counters
           heightLeft -= slicePdfHeight; // Approximate PDF height remaining
           currentSrcY += currentSliceHeight; // Advance pixel pointer
           position++;
+          
+          // Safety break to prevent infinite loops
+          if (position > 50) break; 
         }
       }
       
