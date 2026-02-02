@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Copy, Check } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface RevisionViewProps {
   isAnalyzed: boolean;
@@ -22,6 +24,10 @@ export const RevisionView: React.FC<RevisionViewProps> = ({ isAnalyzed, suggeste
     }
   };
 
+  // Convert single newlines to hard breaks for Markdown rendering
+  // This ensures the layout matches the text template while allowing Markdown formatting
+  const markdownContent = suggestedReply.replace(/\n/g, '  \n');
+
   return (
     <div className="bg-green-50 border border-green-200 rounded-lg p-4 mt-4 flex-1 flex flex-col min-h-0">
       <div className="flex justify-between items-center mb-2 shrink-0">
@@ -35,8 +41,13 @@ export const RevisionView: React.FC<RevisionViewProps> = ({ isAnalyzed, suggeste
           {copied && <span className="text-xs">已复制</span>}
         </button>
       </div>
-      <div className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed overflow-y-auto flex-1 font-mono bg-white/50 p-2 rounded border border-green-100">
-        {suggestedReply}
+      <div className="text-sm text-gray-700 overflow-y-auto flex-1 bg-white/50 p-3 rounded border border-green-100">
+        <ReactMarkdown 
+          remarkPlugins={[remarkGfm]} 
+          className="prose prose-sm max-w-none prose-p:my-1 prose-headings:my-2 prose-strong:text-green-800 prose-li:my-0"
+        >
+          {markdownContent}
+        </ReactMarkdown>
       </div>
     </div>
   );

@@ -1,3 +1,13 @@
+import type { EvaluationResult, WorkOrderInput } from "../types/quality_inspection";
+
+export interface MockCase {
+  id: string;
+  name: string;
+  description: string;
+  input: WorkOrderInput;
+  result: EvaluationResult;
+}
+
 const TODAY = new Date().toLocaleDateString('zh-CN');
 
 export const MOCK_CASES: MockCase[] = [
