@@ -40,6 +40,9 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
         }
       });
       
+      // Wait for a short moment to ensure image data is fully ready (fix for wrong PNG signature)
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
