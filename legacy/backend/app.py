@@ -26,7 +26,7 @@ if not dashscope.api_key:
     logger.error("未找到 DASHSCOPE_API_KEY 环境变量")
     raise ValueError("请在 .env 文件中设置 DASHSCOPE_API_KEY")
 
-MODEL = "qwen-plus"
+MODEL = "qwen3.5-flash-2026-02-23"
 
 def load_negative_words():
     config_path = os.path.join(os.path.dirname(__file__), 'config', 'negative_words.json')
