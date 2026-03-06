@@ -31,7 +31,7 @@ app.post('/analyze', async (c) => {
       baseURL: env.QWEN_BASE_URL || "https://dashscope.aliyuncs.com/compatible-mode/v1",
     });
 
-    const modelName = env.QWEN_MODEL_NAME || "qwen3.5-flash-2026-02-23";
+    const modelName = env.QWEN_MODEL_NAME || "qwen3.5-plus-2026-02-23";
 
     const prompt = `
 You are an expert Government Work Order Quality Inspector. Your task is to evaluate the quality of a "Reply" given to a citizen's "Appeal".
