@@ -5,4 +5,4 @@ pages_build_output_dir = "dist"
 [vars]
 # QWEN_API_KEY = "..."
 QWEN_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
-QWEN_MODEL_NAME = "qwen3.5-plus-2026-02-23"
+QWEN_MODEL_NAME = "qwen3.5-plus-2026-02-15"
