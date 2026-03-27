@@ -341,8 +341,7 @@ export function ReportModal({ isOpen, onClose, result, input }: ReportModalProps
             {/* Report Header */}
             <div className="text-center border-b-2 border-slate-800 pb-4 mb-6">
               <h1 className="text-2xl font-black tracking-widest text-slate-900 mb-2">工单办理质量智能检测报告</h1>
-              <p className="text-sm text-slate-500 uppercase tracking-wider">GovInsight-AI Intelligent Inspection Report</p>
-            </div>
+              <p className="text-sm text-slate-500 uppercase tracking-wider">GovInsight WOQA - Smart Service Quality Audit Report</p>           </div>
 
             {/* Basic Info */}
             <div className="grid grid-cols-2 gap-4 mb-6 text-sm">

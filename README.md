@@ -1,8 +1,9 @@
 <div align="center">
 
-# GovInsight-AI 工单办理质量智能检测系统
+# GovInsight-AI (WOQA) 工单办理质量智能检测系统
 
-**Intelligent Quality Inspection System for Work Order Handling**
+**GovInsight-AI WorkOrder Quality Auditor (WOQA)**
+**Smart Service Quality Audit System**
 
 [![Version](https://img.shields.io/badge/Version-V0.6.0-orange?style=flat-square)](CHANGELOG.md)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
@@ -20,7 +21,7 @@
 
 <a name="简体中文"></a>
 
-**GovInsight-AI** 是一个基于 **大语言模型 (LLM)** 的政务热线工单质量检测系统。它专注于解决政务热线（如 12345）中**“群众诉求”**与**“办理答复”**的一致性与质量校验痛点。
+**GovInsight-AI (WOQA)** 是一个基于 **大语言模型 (LLM)** 的政务热线工单质量检测系统。它专注于解决政务热线（如 12345）中**“群众诉求”**与**“办理答复”**的一致性与质量校验痛点。
 
 通过引入 Qwen-Plus 大模型，系统能够像资深质检员一样，自动比对群众的原始诉求与职能部门的办理回复，精准识别**答非所问、逻辑不通、解决不彻底、态度生硬**等问题，并提供智能化的修正建议。
 
@@ -33,7 +34,7 @@
 *   **🙈 避重就轻**：办理部门往往只回复容易解决的部分，回避群众的核心痛点（如只修绿化不查噪音）。
 *   **😡 态度风险**：部分回复暗含推诿、教训语气，极易引发次生舆情。
 
-**GovInsight-AI** 将 LLM 的语义理解能力引入质检环节，实现对**回复内容**的全量、实时、客观智能检测。
+**GovInsight-AI (WOQA)** 将 LLM 的语义理解能力引入质检环节，实现对**回复内容**的全量、实时、客观智能检测。
 
 ## ✨ 核心价值与功能
 
@@ -226,16 +227,16 @@ npm run dev
 <a name="english-introduction"></a>
 ## English Introduction
 
-**GovInsight-AI** is an intelligent quality inspection system for government service hotline work orders, powered by **Large Language Models (LLM)**. It specifically addresses the pain points of consistency and quality verification between **"Citizen Appeals"** and **"Handling Replies"** in hotlines like 12345.
+**GovInsight-AI (WOQA)** is a professional work order quality inspection system powered by **Large Language Models (LLM)**. It addresses consistency and quality issues in government service hotlines (like 12345) by auditing the alignment between **"Citizen Appeals"** and **"Department Responses"**.
 
-By integrating the Qwen-Plus model, the system acts like a senior quality inspector, automatically comparing the original appeal with the department's reply. It accurately identifies issues such as **irrelevant answers, logical incoherence, incomplete solutions, and harsh attitudes**, while providing intelligent suggestions for revision.
+By leveraging Qwen-Plus, the system acts as an expert auditor, automatically identifying issues like **irrelevance, logical flaws, incomplete resolutions, and inappropriate attitudes**, while providing intelligent suggestions for improvement.
 
 ### ✨ Core Features
 
-1.  **🔍 Multi-dimensional Inspection**: Scans work orders based on 5 core dimensions: Relevance, Logic, Solution, Timeliness, and Attitude.
-2.  **🛡️ Risk Prevention**: Automatically detects typos and filters sensitive/negative words (e.g., "stop complaining").
-3.  **🧠 Explainable AI (CoT)**: Displays the full chain of thought reasoning for transparency.
-4.  **✨ Intelligent Revision**: Generates suggested replies for low-quality work orders.
+1.  **🔍 Multi-dimensional Inspection**: Audits work orders across 5 dimensions: Relevance, Logic, Solution, Timeliness, and Attitude.
+2.  **🛡️ Risk Mitigation**: Detects typos and filters sensitive/negative language.
+3.  **🧠 Explainable AI (CoT)**: Provides transparent reasoning for every audit result.
+4.  **✨ Intelligent Auditing**: Generates optimized response suggestions for lower-quality entries.
 
 ### 🚀 Quick Start
 

@@ -1,5 +1,5 @@
 /**
- * Intelligent Government Service Hotline Work Order Quality Inspection System
+ * GovInsight GIQS - GovInsight Intelligent Quality System
  * Type Definitions
  * Updated for Appeal vs Reply Scoring
  */
