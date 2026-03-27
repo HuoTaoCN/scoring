@@ -165,11 +165,11 @@ function App() {
             <Logo className="text-blue-400" />
             <div>
               <h1 className="text-xl font-bold tracking-tight hidden md:block">
-                GovInsight WOQA <span className="text-sm font-normal text-slate-400 ml-1">工单办理质量智能检测系统</span>
+                GovInsight-AI WOQA <span className="text-sm font-normal text-slate-400 ml-1">工单办理质量智能检测系统</span>
                 <span className="text-xs font-normal text-slate-500 bg-slate-800 px-1.5 py-0.5 rounded ml-2">V0.6.0</span>
               </h1>
               <h1 className="text-lg font-bold tracking-tight md:hidden flex flex-col leading-tight">
-                <span>GovInsight WOQA</span>
+                <span>GovInsight-AI WOQA</span>
                 <span className="text-[10px] font-normal text-slate-400">工单办理质量智能检测系统</span>
               </h1>
               <p className="text-xs text-slate-400 hidden md:block">GovInsight-AI WorkOrder Quality Auditor (WOQA)</p>
