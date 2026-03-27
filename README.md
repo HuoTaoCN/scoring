@@ -1,8 +1,8 @@
 <div align="center">
 
-# GovInsight-AI (WOQA) 工单办理质量智能检测系统
+# GovInsight-AI (SmartScore) 工单办理质量智能检测系统
 
-**GovInsight-AI WorkOrder Quality Auditor (WOQA)**
+**GovInsight-AI SmartScore**
 **Smart Service Quality Audit System**
 
 [![Version](https://img.shields.io/badge/Version-V0.6.0-orange?style=flat-square)](CHANGELOG.md)
@@ -21,7 +21,7 @@
 
 <a name="简体中文"></a>
 
-**GovInsight-AI (WOQA)** 是一个基于 **大语言模型 (LLM)** 的政务热线工单质量检测系统。它专注于解决政务热线（如 12345）中**“群众诉求”**与**“办理答复”**的一致性与质量校验痛点。
+**GovInsight-AI (SmartScore)** 是一个基于 **大语言模型 (LLM)** 的政务热线工单质量检测系统。它专注于解决政务热线（如 12345）中**“群众诉求”**与**“办理答复”**的一致性与质量校验痛点。
 
 通过引入 Qwen-Plus 大模型，系统能够像资深质检员一样，自动比对群众的原始诉求与职能部门的办理回复，精准识别**答非所问、逻辑不通、解决不彻底、态度生硬**等问题，并提供智能化的修正建议。
 
@@ -34,7 +34,7 @@
 *   **🙈 避重就轻**：办理部门往往只回复容易解决的部分，回避群众的核心痛点（如只修绿化不查噪音）。
 *   **😡 态度风险**：部分回复暗含推诿、教训语气，极易引发次生舆情。
 
-**GovInsight-AI (WOQA)** 将 LLM 的语义理解能力引入质检环节，实现对**回复内容**的全量、实时、客观智能检测。
+**GovInsight-AI (SmartScore)** 将 LLM 的语义理解能力引入质检环节，实现对**回复内容**的全量、实时、客观智能检测。
 
 ## ✨ 核心价值与功能
 
@@ -227,7 +227,7 @@ npm run dev
 <a name="english-introduction"></a>
 ## English Introduction
 
-**GovInsight-AI (WOQA)** is a professional work order quality inspection system powered by **Large Language Models (LLM)**. It addresses consistency and quality issues in government service hotlines (like 12345) by auditing the alignment between **"Citizen Appeals"** and **"Department Responses"**.
+**GovInsight-AI (SmartScore)** is a professional work order quality inspection system powered by **Large Language Models (LLM)**. It addresses consistency and quality issues in government service hotlines (like 12345) by auditing the alignment between **"Citizen Appeals"** and **"Department Responses"**.
 
 By leveraging Qwen-Plus, the system acts as an expert auditor, automatically identifying issues like **irrelevance, logical flaws, incomplete resolutions, and inappropriate attitudes**, while providing intelligent suggestions for improvement.
 

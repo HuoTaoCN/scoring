@@ -34,7 +34,7 @@ app.post('/analyze', async (c) => {
     const modelName = env.QWEN_MODEL_NAME || "qwen3.5-plus-2026-02-15";
 
     const prompt = `
-You are an expert Government Work Order Quality Auditor (GovInsight-AI WOQA). Your task is to evaluate the quality of a "Reply" given to a citizen's "Appeal".
+You are an expert Government Work Order Quality Auditor (GovInsight-AI SmartScore). Your task is to evaluate the quality of a "Reply" given to a citizen's "Appeal".
 
 **Input Data:**
 - Appeal Title: ${metadata?.appeal_title || 'N/A'}

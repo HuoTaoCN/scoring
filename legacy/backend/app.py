@@ -43,7 +43,7 @@ def generate_prompt(data):
     negative_words = negative_words_config["负面词语"]
     
     return f"""
-你是一个专业的工单质量审计专家（GovInsight-AI / WOQA）。请根据以下标准对群众网上诉求数据中的"诉求回复内容"进行评分，并评估置信度，输出结构化 JSON 结果。
+你是一个专业的工单质量审计专家（GovInsight-AI / SmartScore）。请根据以下标准对群众网上诉求数据中的"诉求回复内容"进行评分，并评估置信度，输出结构化 JSON 结果。
 
 请采用"思维链 (Chain of Thought)"模式进行研判：
 1. 首先分析群众诉求的核心痛点和关键信息。
