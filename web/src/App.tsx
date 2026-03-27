@@ -165,13 +165,13 @@ function App() {
             <Logo className="text-blue-400" />
             <div>
               <h1 className="text-xl font-bold tracking-tight hidden md:block">
-                GovInsight-AI SC
+                GovInsight-AI SC 工单办理质量智能检测系统
                 <span className="text-xs font-normal text-slate-500 bg-slate-800 px-1.5 py-0.5 rounded ml-2 align-middle">V0.6.0</span>
               </h1>
-              <h1 className="text-lg font-bold tracking-tight md:hidden flex flex-col leading-tight">
-                <span>GovInsight-AI SC</span>
+              <h1 className="text-lg font-bold tracking-tight md:hidden leading-tight">
+                GovInsight-AI SC 工单办理质量智能检测系统
               </h1>
-              <p className="text-xs text-slate-400 mt-0.5">工单办理质量智能检测系统</p>
+              <p className="text-xs text-slate-400 mt-0.5">Smart Case Handling Quality Supervision System</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
