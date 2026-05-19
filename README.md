@@ -11,7 +11,7 @@
 ![Node.js](https://img.shields.io/badge/Node.js-v18+-43853D?style=flat-square&logo=node.js&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat-square&logo=typescript&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-v7-646CFF?style=flat-square&logo=vite&logoColor=white)
-![LLM](https://img.shields.io/badge/LLM-Qwen--Plus-blueviolet?style=flat-square)
+![LLM](https://img.shields.io/badge/LLM-Qwen--3.6--Flash-blueviolet?style=flat-square)
 
 [简体中文](#简体中文) | [English](#english-introduction)
 
@@ -147,7 +147,7 @@ graph TD
 
 *   **前端**: React 19, TypeScript, Tailwind CSS 4, Lucide Icons, Vite
 *   **后端**: Cloudflare Pages Functions, Hono Framework
-*   **AI 模型**: Qwen-Plus (via Aliyun DashScope)
+*   **AI 模型**: Qwen3.6-Flash (via Aliyun DashScope)
 *   **部署**: Cloudflare Workers / Pages
 
 ## 🚀 快速开始
@@ -167,7 +167,7 @@ npm install
 ```ini
 QWEN_API_KEY=your_api_key_here
 QWEN_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
-QWEN_MODEL_NAME=qwen-plus-2025-12-01
+QWEN_MODEL_NAME=qwen3.6-flash
 ```
 
 ### 4. 启动本地开发
@@ -190,7 +190,7 @@ npm run dev
     登录 Cloudflare Dashboard，进入你的 Pages 项目设置 -> **Environment variables**，添加以下变量：
     *   `QWEN_API_KEY`: 你的阿里云 API Key
     *   `QWEN_BASE_URL`: `https://dashscope.aliyuncs.com/compatible-mode/v1`
-    *   `QWEN_MODEL_NAME`: `qwen-plus-2025-12-01`
+    *   `QWEN_MODEL_NAME`: `qwen3.6-flash`
 
 3.  **本地预览 (推荐)**：
     在 `web` 目录下运行以下命令，即可同时启动前端和后端：
