@@ -31,7 +31,7 @@ app.post('/analyze', async (c) => {
       baseURL: env.QWEN_BASE_URL || "https://dashscope.aliyuncs.com/compatible-mode/v1",
     });
 
-    const modelName = env.QWEN_MODEL_NAME || "qwen3.6-flash";
+    const modelName = env.QWEN_MODEL_NAME || "qwen3.7-plus";
 
     const prompt = `
 You are an expert Government Work Order Quality Auditor (GovInsight-AI SC). Your task is to evaluate the quality of a "Reply" given to a citizen's "Appeal".
